@@ -5,6 +5,15 @@ on:
     tags:
       - "v*"
   workflow_dispatch:
+    inputs:
+      platforms:
+        description: Build Windows only, or all original platforms
+        type: choice
+        options: [windows, all]
+        default: windows
+
+permissions:
+  contents: read
 
 jobs:
   build-windows:
@@ -13,27 +22,68 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: 20
-      - run: npm install
+          node-version: 24
+          cache: npm
+      - run: npm ci
       - run: npm test
       - run: npm run fetch:sidecars -- --target windows-x64,windows-arm64
       - run: node scripts/verify-sidecar-binaries.js prebuild:win:all
       - run: npx electron-builder --win --publish never
+      - name: Smoke-test the packaged Windows x64 app
+        shell: pwsh
+        run: |
+          $exe = Join-Path $PWD 'dist/win-unpacked/奶蛙桌宠.exe'
+          if (!(Test-Path -LiteralPath $exe)) { throw 'Packaged app missing' }
+          $process = Start-Process -FilePath $exe -WindowStyle Hidden -PassThru -RedirectStandardOutput dist/smoke-stdout.log -RedirectStandardError dist/smoke-stderr.log
+          try {
+            $healthy = $false
+            for ($i = 0; $i -lt 30; $i++) {
+              Start-Sleep -Seconds 1
+              if ($process.HasExited) { throw "Packaged app exited: $($process.ExitCode)" }
+              try {
+                $health = Invoke-RestMethod -Uri http://127.0.0.1:23333/state -TimeoutSec 2
+                if ($health.ok -and $health.app -eq 'clawd-on-desk') { $healthy = $true; break }
+              } catch {}
+            }
+            if (!$healthy) { throw 'Packaged app did not become healthy' }
+            Start-Sleep -Seconds 5
+            if ($process.HasExited) { throw 'Packaged app exited after startup' }
+            Write-Output 'Packaged Windows x64 startup and health check passed.'
+          } finally {
+            if (!$process.HasExited) { taskkill.exe /PID $process.Id /T /F | Out-Null }
+          }
+      - name: Write Windows checksums
+        shell: pwsh
+        run: |
+          $version = (Get-Content -LiteralPath package.json -Raw | ConvertFrom-Json).version
+          foreach ($arch in @('x64', 'arm64')) {
+            foreach ($kind in @('Setup', 'Portable')) {
+              if (!(Test-Path -LiteralPath "dist/Naiwa-Desktop-Pet-$kind-$version-$arch.exe")) { throw "Missing $kind / $arch" }
+            }
+            if (!(Test-Path -LiteralPath "dist/Naiwa-Desktop-Pet-Setup-$version-$arch.exe.blockmap")) { throw "Missing blockmap / $arch" }
+          }
+          if (!(Test-Path -LiteralPath dist/latest.yml)) { throw 'Missing update metadata' }
+          $files = Get-ChildItem -LiteralPath dist -File | Where-Object { $_.Name -match '^(Naiwa-Desktop-Pet-.*\.exe(\.blockmap)?|latest\.yml)$' } | Sort-Object Name
+          $lines = foreach ($file in $files) { '{0}  {1}' -f (Get-FileHash -LiteralPath $file.FullName -Algorithm SHA256).Hash.ToLowerInvariant(), $file.Name }
+          $lines | Set-Content -LiteralPath dist/SHA256SUMS.txt -Encoding utf8NoBOM
       - uses: actions/upload-artifact@v4
         with:
           name: windows-installer
           path: |
             dist/*.exe
+            dist/*.blockmap
             dist/latest.yml
+            dist/SHA256SUMS.txt
 
   build-mac:
+    if: github.event_name == 'workflow_dispatch' && inputs.platforms == 'all'
     runs-on: macos-latest
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: 20
-      - run: npm install
+          node-version: 24
+      - run: npm ci
       - run: npm run fetch:sidecars -- --target darwin-x64,darwin-arm64
       - run: node scripts/verify-sidecar-binaries.js prebuild:mac
       - run: npx electron-builder --mac --publish never
@@ -45,13 +95,14 @@ jobs:
             dist/latest-mac.yml
 
   build-linux:
+    if: github.event_name == 'workflow_dispatch' && inputs.platforms == 'all'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: 20
-      - run: npm install
+          node-version: 24
+      - run: npm ci
       - run: npm run fetch:sidecars -- --target linux-x64
       - run: node scripts/verify-sidecar-binaries.js prebuild:linux
       - run: npx electron-builder --linux --publish never
@@ -65,7 +116,7 @@ jobs:
 
   release:
     if: startsWith(github.ref, 'refs/tags/v')
-    needs: [build-windows, build-mac, build-linux]
+    needs: [build-windows]
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -73,8 +124,8 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/download-artifact@v4
         with:
+          name: windows-installer
           path: artifacts
-          merge-multiple: true
       - uses: softprops/action-gh-release@v2
         with:
           files: artifacts/*

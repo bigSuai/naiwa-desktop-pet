@@ -68,6 +68,27 @@ function makeLatestReleaseResponse(release) {
   };
 }
 
+describe("portable release updates", () => {
+  it("opens the Naiwa download page without initializing or downloading an installer", async () => {
+    const opened = [], bubbles = [];
+    let factories = 0;
+    const updater = initUpdater(makeCtx({
+      showUpdateBubble: (payload) => { bubbles.push(payload); return payload.mode === "available" ? "primary" : null; },
+    }), makeDeps({
+      platform: "win32", env: { PORTABLE_EXECUTABLE_FILE: "E:\\Naiwa.exe" },
+      shell: { openExternal: (url) => opened.push(url) },
+      fetch: async () => new Response(JSON.stringify({ tag_name: "v0.8.3", assets: [] })),
+      autoUpdaterFactory: () => { factories++; throw new Error("Portable must not initialize an installer updater"); },
+    }));
+    updater.setupAutoUpdater();
+    await updater.checkForUpdates(true);
+    assert.equal(factories, 0);
+    assert.deepEqual(opened, ["https://github.com/bigSuai/naiwa-desktop-pet/releases/latest"]);
+    assert.deepEqual(bubbles.map((bubble) => bubble.mode), ["checking", "available"]);
+    assert.equal(bubbles[1].actions[0].label, "Download");
+  });
+});
+
 function makePendingReleaseResponse(queue) {
   return (options, cb) => {
     queue.push((release) => {

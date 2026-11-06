@@ -1,6 +1,6 @@
 {
   "name": "clawd-on-desk",
-  "version": "0.8.2-naiwa.1",
+  "version": "0.8.3",
   "description": "Naiwa desktop companion with AI agent activity and private, user-configured chat.",
   "main": "src/main.js",
   "scripts": {
@@ -87,7 +87,7 @@
     "win": {
       "icon": "assets/icon.ico",
       "signAndEditExecutable": false,
-      "artifactName": "Clawd-on-Desk-Setup-${version}-${arch}.${ext}",
+      "artifactName": "Naiwa-Desktop-Pet-Setup-${version}-${arch}.${ext}",
       "target": [
         {
           "target": "nsis",
@@ -95,8 +95,18 @@
             "x64",
             "arm64"
           ]
+        },
+        {
+          "target": "portable",
+          "arch": [
+            "x64",
+            "arm64"
+          ]
         }
       ]
+    },
+    "portable": {
+      "artifactName": "Naiwa-Desktop-Pet-Portable-${version}-${arch}.${ext}"
     },
     "linux": {
       "maintainer": "bigSuai <bigSuai@users.noreply.github.com>",
@@ -128,7 +138,9 @@
       "include": "build/installer.nsh"
     },
     "files": [
+      "LICENSE",
       "NOTICE.md",
+      "assets/LICENSE",
       "src/**/*",
       "assets/icon.ico",
       "assets/icons/**/*",

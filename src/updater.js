@@ -111,6 +111,8 @@ function initUpdater(ctx, deps = {}) {
   const t = makeTranslate(ctx);
   const runtimePlatform = deps.platform || process.platform;
   const runtimeArch = deps.arch || process.arch;
+  const runtimeEnv = deps.env || process.env;
+  const isPortable = runtimePlatform === "win32" && !!(runtimeEnv.PORTABLE_EXECUTABLE_FILE || runtimeEnv.PORTABLE_EXECUTABLE_DIR);
 
   let updateStatus = "idle";
   // activeCheck carries the current in-flight check context. trigger:
@@ -644,7 +646,7 @@ function initUpdater(ctx, deps = {}) {
     // pet does not get stuck masking working/thinking.
     pulseState("notification");
 
-    const isMacUi = process.platform === "darwin";
+    const isMacUi = process.platform === "darwin" || isPortable;
     const primaryLabel = isMacUi ? t("download", "Download") : t("updateNow", "Update Now");
     const messageKey = isMacUi
       ? t("updateAvailableMacMsg", "v{version} is available. Open the download page?")
@@ -686,7 +688,7 @@ function initUpdater(ctx, deps = {}) {
   }
 
   function isRunningX64OnWindowsArm64() {
-    return shouldPromptNativeArm64({
+    return !isPortable && shouldPromptNativeArm64({
       platform: runtimePlatform,
       arch: runtimeArch,
       isPackaged: app.isPackaged,
@@ -697,6 +699,7 @@ function initUpdater(ctx, deps = {}) {
   }
 
   function getAutoUpdater() {
+    if (isPortable) return null;
     if (autoUpdaterInstance) return autoUpdaterInstance;
     try {
       autoUpdaterInstance = deps.autoUpdaterFactory
@@ -1271,6 +1274,24 @@ function initUpdater(ctx, deps = {}) {
       if (downloadIntent) clearPendingUpdate();
       if (manual && !downloadIntent) await showUpToDateBubble(currentVersion);
       else dismissToResolvedState();
+      return;
+    }
+
+    if (isPortable) {
+      updateStatus = "available";
+      setOverlay("available");
+      rebuildMenus();
+      await promptAvailableUpdate({
+        mode: "mac", version: formatVersionForMessage(latestVersion),
+        onPrimary: async () => {
+          await shell.openExternal(RELEASES_LATEST_URL);
+          clearPendingUpdate();
+          clearActiveCheck();
+          updateStatus = "idle";
+          rebuildMenus();
+          dismissToResolvedState();
+        },
+      });
       return;
     }
 

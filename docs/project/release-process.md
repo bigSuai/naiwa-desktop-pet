@@ -1,6 +1,9 @@
 # Release Process
 
-Use this flow when preparing a Clawd app release.
+Use this flow when preparing a Naiwa app release. Tagged releases currently
+publish Windows x64 / ARM64 NSIS installers and portable executables. macOS and
+Linux remain available through the manual workflow's `platforms: all` option;
+those artifacts are not automatically published as verified Naiwa binaries.
 
 ## Before Tagging
 
@@ -15,7 +18,8 @@ node scripts/verify-sidecar-binaries.js prebuild:all
 
 4. Run the `Build & Release` workflow manually on `main`.
 
-Manual workflow dispatch builds Windows, macOS, and Linux artifacts, fetches the
+Manual workflow dispatch defaults to Windows; `platforms: all` also builds the
+original macOS and Linux artifacts. It fetches the
 pinned `cc-connect-clawd` sidecar release, verifies source-pinned checksums, and
 uploads build artifacts. It does not publish a GitHub Release.
 
@@ -29,8 +33,9 @@ git tag vX.Y.Z
 git push origin vX.Y.Z
 ```
 
-Pushing a `v*` tag runs the same build workflow again and creates a draft GitHub
-Release with the generated installers and release notes. Draft releases are not
+Pushing a `v*` tag builds Windows and creates a draft GitHub Release with the
+installers, portable executables, blockmaps, `latest.yml`, SHA-256 checksums and
+release notes. Draft releases are not
 visible to normal users and are not consumed by the updater.
 
 Download and smoke-test the draft release assets before publishing the draft.

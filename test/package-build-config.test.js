@@ -45,6 +45,19 @@ describe("package build config", () => {
   });
 
   describe("Windows architecture targets", () => {
+    it("provides distinctly named Naiwa portable builds for both architectures", () => {
+      const target = pkg.build.win.target.find((item) => item.target === "portable");
+      assert.ok(target, "Windows releases need a portable target");
+      assert.deepStrictEqual(target.arch.slice().sort(), ["arm64", "x64"]);
+      assert.strictEqual(pkg.build.portable.artifactName, "Naiwa-Desktop-Pet-Portable-${version}-${arch}.${ext}");
+      assert.match(pkg.build.win.artifactName, /^Naiwa-Desktop-Pet-Setup-/);
+    });
+
+    it("includes the program license and original asset license in binary distributions", () => {
+      assert.ok(pkg.build.files.includes("LICENSE"));
+      assert.ok(pkg.build.files.includes("assets/LICENSE"));
+    });
+
     function getWindowsNsisTarget() {
       const targets = pkg.build.win && pkg.build.win.target;
       return Array.isArray(targets) ? targets.find((target) => target && target.target === "nsis") : null;

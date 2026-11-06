@@ -99,6 +99,12 @@ function assertNoUtf8Bom(filePath) {
 }
 
 describe("Windows NSIS Claude hook uninstall cleanup", () => {
+  it("uses the packaged executable name rather than the former product name", () => {
+    const nsis = readText(NSIS_INCLUDE);
+    assert.ok(nsis.includes("$INSTDIR\\${APP_EXECUTABLE_FILENAME}"));
+    assert.ok(!nsis.includes("Clawd on Desk.exe"));
+  });
+
   it("wires the NSIS include and cleanup script into package config", () => {
     assert.strictEqual(pkg.build.nsis && pkg.build.nsis.include, "build/installer.nsh");
     assert.ok(fs.existsSync(NSIS_INCLUDE), "build/installer.nsh should exist");
