@@ -65,7 +65,8 @@ jobs:
             assert.equal(hash(file.url, 'sha512'), file.sha512);
             assert.equal(fs.statSync(path.join('downloads', file.url)).size, file.size);
           }
-          fs.writeFileSync('release-verification.json', JSON.stringify({ tag: process.env.RELEASE_TAG, sourceCommit: process.env.GITHUB_SHA, checkedFiles: [...checksums].map(([name, sha256]) => ({ name, sha256 })), updateMetadataVerified: true }, null, 2));
+          const sourceCommit = require('node:child_process').execFileSync('git', ['rev-parse', 'HEAD'], { encoding: 'utf8' }).trim();
+          fs.writeFileSync('release-verification.json', JSON.stringify({ tag: process.env.RELEASE_TAG, sourceCommit, workflowCommit: process.env.GITHUB_SHA, checkedFiles: [...checksums].map(([name, sha256]) => ({ name, sha256 })), updateMetadataVerified: true }, null, 2));
           '@ | node
       - name: Install, launch, uninstall and launch portable x64
         shell: pwsh
