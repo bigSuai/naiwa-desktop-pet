@@ -24,3 +24,20 @@ it("uses Electron networking for chat so system proxy settings apply", async () 
   assert.equal(await options.fetch("https://api.openai.com/v1/responses", request), "reply");
   assert.deepEqual(calls, [["https://api.openai.com/v1/responses", request]]);
 });
+
+it("injects Electron networking into the updater so system proxy settings apply", async () => {
+  const source = fs.readFileSync(path.join(__dirname, "..", "src", "main.js"), "utf8");
+  const init = source.match(/const _updater = require\("\.\/updater"\)\([\s\S]*?\);/);
+  assert.ok(init);
+  let options;
+  const calls = [];
+  vm.runInNewContext(init[0], {
+    _updaterCtx: {},
+    require: () => (_context, value) => { options = value; return {}; },
+    net: { fetch: async (...args) => { calls.push(args); return "response"; } },
+  });
+  assert.equal(typeof options?.fetch, "function");
+  const request = { redirect: "manual" };
+  assert.equal(await options.fetch("https://api.github.com", request), "response");
+  assert.deepEqual(calls, [["https://api.github.com", request]]);
+});

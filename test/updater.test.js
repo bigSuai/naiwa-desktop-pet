@@ -1101,6 +1101,63 @@ describe("updater visual flow", () => {
 });
 
 describe("Naiwa update repository", () => {
+  it("uses the injected system-proxy transport and handles a repository with no releases", async () => {
+    const requests = [];
+    const bubbles = [];
+    const updater = initUpdater(makeCtx({ showUpdateBubble: (value) => { bubbles.push(value); } }), makeDeps({
+      fetch: async (url, options) => {
+        requests.push({ url, options });
+        return new Response("{}", { status: 404 });
+      },
+      httpsGetImpl: () => { throw new Error("Direct Node HTTPS must not be used"); },
+    }));
+    await updater.checkForUpdates(true);
+    assert.equal(requests.length, 1);
+    assert.equal(requests[0].url, "https://api.github.com/repos/bigSuai/naiwa-desktop-pet/releases/latest");
+    assert.equal(requests[0].options.redirect, "manual");
+    assert.ok(requests[0].options.signal instanceof AbortSignal);
+    assert.deepEqual(bubbles.map((b) => b.mode), ["checking", "up-to-date"]);
+    assert.match(bubbles[1].message, /Naiwa.*release/i);
+  });
+
+  it("preserves manual redirect fallback and ETag caching over the system-proxy transport", async () => {
+    const requests = [];
+    const responses = [
+      new Response("{}", { status: 403 }),
+      new Response(null, { status: 302, headers: { location: "https://github.com/bigSuai/naiwa-desktop-pet/releases/tag/v0.9.0" } }),
+      new Response(JSON.stringify({ tag_name: "v0.9.0", assets: [] }), { headers: { etag: '"naiwa-etag"' } }),
+      new Response(null, { status: 304 }),
+    ];
+    const updater = initUpdater(makeCtx(), makeDeps({
+      fetch: async (url, options) => { requests.push({ url, options }); return responses.shift(); },
+      httpsGetImpl: () => { throw new Error("Direct Node HTTPS must not be used"); },
+    }));
+    for (let i = 0; i < 3; i++) assert.equal((await updater.quietDiscover()).status, "new-update");
+    assert.equal(requests[1].url, "https://github.com/bigSuai/naiwa-desktop-pet/releases/latest");
+    assert.equal(requests[3].options.headers["If-None-Match"], '"naiwa-etag"');
+    assert.ok(requests.every((r) => r.options.redirect === "manual"));
+  });
+
+  it("aborts timed-out proxy requests and reports a real network error", async (t) => {
+    t.mock.timers.enable({ apis: ["setTimeout"] });
+    let signal;
+    const bubbles = [];
+    const updater = initUpdater(makeCtx({ showUpdateBubble: (value) => { bubbles.push(value); } }), makeDeps({
+      fetch: async (_url, options) => {
+        signal = options.signal;
+        return new Promise((_resolve, reject) => signal.addEventListener("abort", () => reject(new Error("aborted")), { once: true }));
+      },
+      httpsGetImpl: () => { throw new Error("Direct Node HTTPS must not be used"); },
+    }));
+    const checking = updater.checkForUpdates(true);
+    await new Promise((resolve) => setImmediate(resolve));
+    t.mock.timers.tick(10000);
+    await checking;
+    assert.equal(signal.aborted, true);
+    assert.deepEqual(bubbles.map((b) => b.mode), ["checking", "error"]);
+    assert.match(bubbles[1].detail, /GitHub API request timed out/);
+  });
+
   it("checks Naiwa releases without fetching the legacy source origin", async () => {
     const commands = [];
     const requests = [];

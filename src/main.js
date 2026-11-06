@@ -2554,7 +2554,9 @@ const _updaterCtx = {
     try { _settingsController.applyUpdate(key, value); } catch {}
   },
 };
-const _updater = require("./updater")(_updaterCtx);
+const _updater = require("./updater")(_updaterCtx, {
+  fetch: (url, options) => net.fetch(url, options),
+});
 const {
   setupAutoUpdater,
   checkForUpdates,

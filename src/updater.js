@@ -105,6 +105,7 @@ function initUpdater(ctx, deps = {}) {
   const app = deps.app || electron.app;
   const shell = deps.shell || electron.shell;
   const httpsGet = deps.httpsGetImpl || https.get;
+  const fetchImpl = deps.fetch;
   const execFileFn = deps.execFileImpl || execFile;
   const fsApi = deps.fsImpl || fs;
   const t = makeTranslate(ctx);
@@ -485,88 +486,84 @@ function initUpdater(ctx, deps = {}) {
     }
   }
 
-  function fetchLatestReleaseViaRedirect() {
+  async function requestGitHub(options, label) {
+    const timeoutMessage = `${label} request timed out (10s)`;
+    if (typeof fetchImpl === "function") {
+      const controller = new AbortController();
+      let timedOut = false;
+      const timer = setTimeout(() => {
+        timedOut = true;
+        controller.abort();
+      }, 10000);
+      try {
+        const response = await fetchImpl(`https://${options.hostname}${options.path}`, {
+          headers: options.headers,
+          redirect: "manual",
+          signal: controller.signal,
+        });
+        const body = await response.text();
+        return { statusCode: response.status, headers: Object.fromEntries(response.headers.entries()), body };
+      } catch (err) {
+        if (timedOut) throw new Error(timeoutMessage);
+        throw err;
+      } finally {
+        clearTimeout(timer);
+      }
+    }
+
     return new Promise((resolve, reject) => {
-      const req = httpsGet({
-        hostname: "github.com",
-        path: `/${appIdentity.owner}/${appIdentity.repository}/releases/latest`,
-        headers: {
-          "User-Agent": "Naiwa-Desktop-Pet",
-          Accept: "text/html,*/*",
-        },
-      }, (res) => {
-        const tag = extractLatestRedirectTag(res.headers && res.headers.location);
+      const req = httpsGet(options, (res) => {
         let data = "";
         res.on("data", (chunk) => { data += chunk; });
-        res.on("end", () => {
-          if (res.statusCode >= 300 && res.statusCode < 400 && tag) {
-            // The redirect fallback only exposes the tag, not release assets.
-            // Windows-on-ARM64 native-installer prompts therefore fall back to
-            // the normal updater path while the GitHub API is unavailable.
-            return resolve({ tag_name: tag, assets: [] });
-          }
-          reject(new Error(`GitHub releases redirect returned ${res.statusCode}${data ? `: ${data.slice(0, 160)}` : ""}`));
-        });
+        res.on("end", () => resolve({ statusCode: res.statusCode, headers: res.headers || {}, body: data }));
         res.on("error", reject);
       });
-
       if (req && typeof req.on === "function") req.on("error", reject);
       if (req && typeof req.setTimeout === "function") {
         req.setTimeout(10000, () => {
           if (typeof req.destroy === "function") req.destroy();
-          reject(new Error("GitHub releases redirect request timed out (10s)"));
+          reject(new Error(timeoutMessage));
         });
       }
     });
   }
 
-  function fetchLatestReleaseFromApi() {
-    return new Promise((resolve, reject) => {
-      const headers = { "User-Agent": "Naiwa-Desktop-Pet" };
-      if (lastReleaseEtag) headers["If-None-Match"] = lastReleaseEtag;
-      const req = httpsGet({
-        hostname: "api.github.com",
-        path: `/repos/${appIdentity.owner}/${appIdentity.repository}/releases/latest`,
-        headers,
-      }, (res) => {
-        // 304 Not Modified — drain and serve the cached release.
-        if (res.statusCode === 304) {
-          res.resume();
-          res.on("end", () => {
-            if (lastReleaseJson) return resolve(lastReleaseJson);
-            return reject(new Error("304 Not Modified but no cached release"));
-          });
-          res.on("error", reject);
-          return;
-        }
-        let data = "";
-        res.on("data", (chunk) => { data += chunk; });
-        res.on("end", () => {
-          if (res.statusCode !== 200) {
-            if (res.statusCode === 404) return reject(new Error("No releases found"));
-            return reject(buildGitHubApiStatusError(res, data));
-          }
-          try {
-            const release = JSON.parse(data);
-            if (!release.tag_name) return reject(new Error("No tag_name in release"));
-            const etag = res.headers && (res.headers.etag || res.headers.ETag);
-            if (etag) lastReleaseEtag = String(etag);
-            lastReleaseJson = release;
-            resolve(release);
-          } catch (err) {
-            reject(new Error(`Failed to parse GitHub response: ${err.message}`));
-          }
-        });
-      });
+  async function fetchLatestReleaseViaRedirect() {
+    const res = await requestGitHub({
+      hostname: "github.com",
+      path: `/${appIdentity.owner}/${appIdentity.repository}/releases/latest`,
+      headers: { "User-Agent": "Naiwa-Desktop-Pet", Accept: "text/html,*/*" },
+    }, "GitHub releases redirect");
+    const tag = extractLatestRedirectTag(res.headers.location);
+    if (res.statusCode >= 300 && res.statusCode < 400 && tag) {
+      // Redirect discovery supplies a tag but no installer asset metadata.
+      return { tag_name: tag, assets: [] };
+    }
+    throw new Error(`GitHub releases redirect returned ${res.statusCode}${res.body ? `: ${res.body.slice(0, 160)}` : ""}`);
+  }
 
-      if (req && typeof req.on === "function") req.on("error", reject);
-      if (req && typeof req.setTimeout === "function") {
-        req.setTimeout(10000, () => {
-          if (typeof req.destroy === "function") req.destroy();
-          reject(new Error("GitHub API request timed out (10s)"));
-        });
-      }
-    });
+  async function fetchLatestReleaseFromApi() {
+    const headers = { "User-Agent": "Naiwa-Desktop-Pet" };
+    if (lastReleaseEtag) headers["If-None-Match"] = lastReleaseEtag;
+    const res = await requestGitHub({
+      hostname: "api.github.com",
+      path: `/repos/${appIdentity.owner}/${appIdentity.repository}/releases/latest`,
+      headers,
+    }, "GitHub API");
+    if (res.statusCode === 304) {
+      if (lastReleaseJson) return lastReleaseJson;
+      throw new Error("304 Not Modified but no cached release");
+    }
+    if (res.statusCode === 404) throw new Error("No releases found");
+    if (res.statusCode !== 200) throw buildGitHubApiStatusError(res, res.body);
+    let release;
+    try { release = JSON.parse(res.body); }
+    catch (err) { throw new Error(`Failed to parse GitHub response: ${err.message}`); }
+    if (!release.tag_name) throw new Error("No tag_name in release");
+    const etag = res.headers.etag || res.headers.ETag;
+    if (etag) lastReleaseEtag = String(etag);
+    lastReleaseJson = release;
+    return release;
   }
 
   async function fetchLatestRelease() {
