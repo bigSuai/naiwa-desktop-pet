@@ -336,6 +336,7 @@ describe("updater visual flow", () => {
       hideUpdateBubble: () => { hideCount += 1; },
     });
     const stdoutByArgs = new Map([
+      ["remote get-url origin", "https://github.com/bigSuai/naiwa-desktop-pet.git"],
       ["rev-parse --abbrev-ref HEAD", "main"],
       ["fetch origin main", ""],
       ["rev-parse HEAD", "aaaaaaaa"],
@@ -526,8 +527,8 @@ describe("updater visual flow", () => {
     assert.deepStrictEqual(requests, [
       "api.github.com/repos/bigSuai/naiwa-desktop-pet/releases/latest",
     ]);
-    assert.deepStrictEqual(bubbles.map((bubble) => bubble.mode), ["checking", "error"]);
-    assert.match(bubbles[1].detail, /Reason: No releases found/);
+    assert.deepStrictEqual(bubbles.map((bubble) => bubble.mode), ["checking", "up-to-date"]);
+    assert.match(bubbles[1].message, /Naiwa.*release/i);
   });
 
   it("shows a real error bubble when packaged download fails after user starts it", async () => {
@@ -1048,6 +1049,7 @@ describe("updater visual flow", () => {
       },
       execFileImpl(command, args, options, callback) {
         const key = `${command} ${args.join(" ")}`;
+        if (key === "git remote get-url origin") return callback(null, "https://github.com/bigSuai/naiwa-desktop-pet.git");
         if (key === "git rev-parse --abbrev-ref HEAD") return callback(null, "main");
         if (key === "git fetch origin main") return callback(null, "");
         if (key === "git rev-parse HEAD") return callback(null, "localsha");
@@ -1095,6 +1097,41 @@ describe("updater visual flow", () => {
 
     assert.strictEqual(resetSoundCooldownCalls, 1);
     assert.ok(appliedStates.includes("attention"));
+  });
+});
+
+describe("Naiwa update repository", () => {
+  it("checks Naiwa releases without fetching the legacy source origin", async () => {
+    const commands = [];
+    const requests = [];
+    const bubbles = [];
+    const updater = initUpdater(makeCtx({
+      showUpdateBubble: async (payload) => { bubbles.push(payload); return null; },
+    }), makeDeps({
+      app: { isPackaged: false, getVersion: () => "0.8.2-naiwa.1" },
+      fsImpl: { statSync: () => ({ isDirectory: () => true }) },
+      execFileImpl(_command, args, _options, callback) {
+        commands.push(args.join(" "));
+        callback(null, args[0] === "remote" ? "https://github.com/rullerzhou-afk/clawd-on-desk.git" : "main");
+      },
+      httpsGetImpl: makeSequencedHttpsGet([{ statusCode: 404, body: "{}" }], requests),
+    }));
+    await updater.checkForUpdates(true);
+    assert.deepStrictEqual(commands, ["remote get-url origin"]);
+    assert.deepStrictEqual(requests, ["api.github.com/repos/bigSuai/naiwa-desktop-pet/releases/latest"]);
+    assert.deepStrictEqual(bubbles.map((b) => b.mode), ["checking", "up-to-date"]);
+    assert.match(bubbles[1].message, /Naiwa|奶蛙/);
+    assert.match(bubbles[1].message, /release|发行/);
+  });
+
+  it("accepts only the canonical Naiwa GitHub remote, including SSH clones", () => {
+    const { isAppRepositoryUrl } = initUpdater.__test;
+    for (const url of ["https://github.com/bigSuai/naiwa-desktop-pet.git", "git@github.com:bigSuai/naiwa-desktop-pet.git", "ssh://git@github.com/bigSuai/naiwa-desktop-pet.git"]) {
+      assert.strictEqual(isAppRepositoryUrl(url), true, url);
+    }
+    for (const url of ["https://github.com/rullerzhou-afk/clawd-on-desk.git", "https://github.com.evil.invalid/bigSuai/naiwa-desktop-pet", "https://github.com/bigSuai/naiwa-desktop-pet-extra", ""]) {
+      assert.strictEqual(isAppRepositoryUrl(url), false, url);
+    }
   });
 });
 

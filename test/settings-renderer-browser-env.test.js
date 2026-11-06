@@ -1170,6 +1170,37 @@ function createAnimOverridesRuntime(card, overrides = {}) {
 }
 
 describe("settings renderer browser environment", () => {
+  it("renders Naiwa About without the three legacy credit rows", async () => {
+    const identity = require("../src/app-identity");
+    const strings = loadSettingsI18nForTest();
+    const parent = new FakeElement("main");
+    const opened = [];
+    const context = {
+      document: { createElement: (tag) => new FakeElement(tag) },
+      settingsAPI: { getAboutInfo: async () => ({ ...identity, version: "0.8.2-naiwa.1", license: "AGPL-3.0" }) },
+    };
+    context.window = context;
+    context.globalThis = context;
+    vm.createContext(context);
+    vm.runInContext(fs.readFileSync(path.join(SRC_DIR, "settings-tab-about.js"), "utf8"), context);
+    const core = {
+      runtime: { about: { clickCount: 0 } }, tabs: {},
+      helpers: { t: (key) => strings.zh[key] || key, openExternalSafe: (url) => opened.push(url) },
+      ops: {}, i18n: { MAINTAINERS: ["legacy-maintainer"], CONTRIBUTORS: ["legacy-contributor"] },
+    };
+    context.ClawdSettingsTabAbout.init(core);
+    core.tabs.about.render(parent);
+    await new Promise((resolve) => setImmediate(resolve));
+    const labels = parent.querySelectorAll(".about-info-label").map((el) => el.textContent || el.children[0].textContent);
+    assert.deepStrictEqual(labels, ["版本", "自动检查更新", "代码仓库", "开源协议", "作者"]);
+    const text = parent.querySelectorAll("div").map((el) => el.textContent).join(" ");
+    assert.doesNotMatch(text, /Clawd|Upstream|Ruller|legacy-/);
+    const repositoryLink = parent.querySelectorAll("a").find((el) => el.textContent.includes("naiwa-desktop-pet"));
+    repositoryLink.dispatchEvent({ type: "click" });
+    assert.deepStrictEqual(opened, [identity.repoUrl]);
+    for (const language of Object.values(strings)) assert.doesNotMatch(language.aboutFooter, /Clawd/);
+  });
+
   it("loads browser scripts in dependency order and keeps CommonJS helpers out of settings.html", () => {
     const html = fs.readFileSync(SETTINGS_HTML, "utf8");
     const scriptOrder = [

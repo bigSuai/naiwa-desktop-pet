@@ -626,7 +626,7 @@ test("settings IPC serves agent/about/update/external and remove-theme dialog he
       version: "1.2.3",
       repoUrl: "https://github.com/bigSuai/naiwa-desktop-pet",
       license: "AGPL-3.0",
-      copyright: "\u00a9 2026 bigSuai; upstream Ruller_Lulu and contributors",
+      copyright: "\u00a9 2026 bigSuai",
       authorName: "bigSuai",
       authorUrl: "https://github.com/bigSuai",
       upstreamName: "Clawd on Desk · Ruller_Lulu / 鹿鹿",

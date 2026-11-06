@@ -8,6 +8,18 @@ const appIdentity = require("./app-identity");
 const isMac = process.platform === "darwin";
 const RELEASES_LATEST_URL = `${appIdentity.repoUrl}/releases/latest`;
 
+function isAppRepositoryUrl(value) {
+  let url = String(value || "").trim();
+  if (url.startsWith("git@github.com:")) url = "https://github.com/" + url.slice("git@github.com:".length);
+  try {
+    const parsed = new URL(url);
+    return ["https:", "ssh:"].includes(parsed.protocol) &&
+      parsed.hostname.toLowerCase() === "github.com" && !parsed.port && !parsed.search && !parsed.hash &&
+      parsed.pathname.replace(/\.git\/?$/, "").replace(/\/$/, "").toLowerCase() ===
+        `/${appIdentity.owner}/${appIdentity.repository}`.toLowerCase();
+  } catch { return false; }
+}
+
 function makeTranslate(ctx) {
   return (key, fallback) => {
     const value = typeof ctx.t === "function" ? ctx.t(key) : key;
@@ -479,7 +491,7 @@ function initUpdater(ctx, deps = {}) {
         hostname: "github.com",
         path: `/${appIdentity.owner}/${appIdentity.repository}/releases/latest`,
         headers: {
-          "User-Agent": "Clawd-on-Desk",
+          "User-Agent": "Naiwa-Desktop-Pet",
           Accept: "text/html,*/*",
         },
       }, (res) => {
@@ -510,7 +522,7 @@ function initUpdater(ctx, deps = {}) {
 
   function fetchLatestReleaseFromApi() {
     return new Promise((resolve, reject) => {
-      const headers = { "User-Agent": "Clawd-on-Desk" };
+      const headers = { "User-Agent": "Naiwa-Desktop-Pet" };
       if (lastReleaseEtag) headers["If-None-Match"] = lastReleaseEtag;
       const req = httpsGet({
         hostname: "api.github.com",
@@ -832,7 +844,10 @@ function initUpdater(ctx, deps = {}) {
     );
 
     try {
-      await gitCmd(["pull", "origin", branch], repoRoot, 60000);
+      if (!isAppRepositoryUrl(await gitCmd(["remote", "get-url", "origin"], repoRoot))) {
+        throw new Error("Update origin must be the Naiwa desktop pet repository.");
+      }
+      await gitCmd(["pull", "--ff-only", "origin", branch], repoRoot, 60000);
     } catch (err) {
       err.updateOperation = "Apply Git Update";
       err.updateFailureType = "Git Pull Failed";
@@ -867,7 +882,7 @@ function initUpdater(ctx, deps = {}) {
     app.exit(0);
   }
 
-  async function gitCheckForUpdates(repoRoot, manual) {
+  async function gitCheckForUpdates(repoRoot, manual, opts) {
     updateStatus = "checking";
     beginActiveCheck({ trigger: manual ? "manual" : "scheduled", intent: "check" });
     setOverlay("checking");
@@ -879,6 +894,11 @@ function initUpdater(ctx, deps = {}) {
     );
 
     try {
+      const origin = await gitCmd(["remote", "get-url", "origin"], repoRoot).catch(() => "");
+      if (!isAppRepositoryUrl(origin)) {
+        log("Source origin is not Naiwa; checking the canonical Naiwa releases instead.");
+        return releaseCheckForUpdates(opts, true);
+      }
       const branch = await gitCmd(["rev-parse", "--abbrev-ref", "HEAD"], repoRoot);
       await gitCmd(["fetch", "origin", branch], repoRoot);
 
@@ -1179,12 +1199,14 @@ function initUpdater(ctx, deps = {}) {
     invalidateNativeArm64Prompt();
 
     const opts = normalizeCheckOpts(arg);
+    const repoRoot = getRepoRoot();
+    if (repoRoot) return gitCheckForUpdates(repoRoot, opts.trigger === "manual", opts);
+    return releaseCheckForUpdates(opts);
+  }
+
+  async function releaseCheckForUpdates(opts, checkingShown = false) {
     const manual = opts.trigger === "manual";
     const downloadIntent = opts.intent === "download";
-
-    const repoRoot = getRepoRoot();
-    if (repoRoot) return gitCheckForUpdates(repoRoot, manual);
-
     const currentVersion = app.getVersion();
     beginActiveCheck({ trigger: opts.trigger, intent: opts.intent });
     updateStatus = "checking";
@@ -1194,7 +1216,7 @@ function initUpdater(ctx, deps = {}) {
     // the tray label reflects in-flight state.
     setOverlay("checking");
     rebuildMenus();
-    if (!downloadIntent) {
+    if (!downloadIntent && !checkingShown) {
       await showInfoBubble(
         "checking",
         t("checkForUpdates", "Check for Updates"),
@@ -1208,6 +1230,19 @@ function initUpdater(ctx, deps = {}) {
       latestRelease = await fetchLatestRelease();
       latestVersion = latestRelease.tag_name;
     } catch (err) {
+      if (err && err.message === "No releases found") {
+        updateStatus = "idle";
+        clearActiveCheck();
+        clearPendingUpdate();
+        rebuildMenus();
+        dismissToResolvedState();
+        if (manual && !downloadIntent) {
+          await showInfoBubble("up-to-date", t("updateNoRelease", "No Published Release Yet"),
+            t("updateNoReleaseMsg", "Naiwa has not published an installable release yet. Source updates are available in bigSuai/naiwa-desktop-pet."),
+            { actions: [{ id: "dismiss", label: t("dismiss", "Dismiss"), variant: "secondary" }], defaultAction: "dismiss" });
+        }
+        return;
+      }
       updateStatus = "error";
       clearActiveCheck();
       rebuildMenus();
@@ -1349,5 +1384,6 @@ module.exports.__test = {
   findWindowsArm64InstallerAsset,
   formatVersionForMessage,
   isUpdate404Error,
+  isAppRepositoryUrl,
   shouldPromptNativeArm64,
 };

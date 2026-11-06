@@ -4,7 +4,6 @@
   let runtime = null;
   let helpers = null;
   let ops = null;
-  let i18n = null;
 
   function t(key) {
     return helpers.t(key);
@@ -167,64 +166,6 @@
     infoSection.className = "section";
     parent.appendChild(infoSection);
 
-    const maintainersRow = document.createElement("div");
-    maintainersRow.className = "about-info-row";
-    const maintainersLabel = document.createElement("div");
-    maintainersLabel.className = "about-info-label";
-    maintainersLabel.textContent = "Clawd · " + t("aboutMaintainersLabel");
-    const maintainersValue = document.createElement("div");
-    maintainersValue.className = "about-info-value";
-    maintainersValue.style.display = "flex";
-    maintainersValue.style.flexWrap = "wrap";
-    maintainersValue.style.gap = "12px";
-    maintainersValue.style.justifyContent = "flex-end";
-    for (const name of i18n.MAINTAINERS) {
-      const link = document.createElement("a");
-      link.className = "about-contributor-link";
-      link.textContent = "@" + name;
-      link.href = "#";
-      link.addEventListener("click", (e) => {
-        e.preventDefault();
-        helpers.openExternalSafe("https://github.com/" + name);
-      });
-      maintainersValue.appendChild(link);
-    }
-    maintainersRow.appendChild(maintainersLabel);
-    maintainersRow.appendChild(maintainersValue);
-
-    const contribRow = document.createElement("div");
-    contribRow.className = "about-info-row";
-    const contribLabel = document.createElement("div");
-    contribLabel.className = "about-info-label";
-    contribLabel.textContent = "Clawd · " + t("aboutContributorsLabel") + " (" + i18n.CONTRIBUTORS.length + ")";
-    const toggleBtn = document.createElement("button");
-    toggleBtn.className = "about-contributors-toggle";
-    toggleBtn.textContent = runtime.about.contributorsExpanded ? t("aboutContributorsHide") : t("aboutContributorsShowAll");
-    contribRow.appendChild(contribLabel);
-    contribRow.appendChild(toggleBtn);
-
-    const contribList = document.createElement("div");
-    contribList.className = "about-contributors-list" + (runtime.about.contributorsExpanded ? "" : " collapsed");
-    for (const name of i18n.CONTRIBUTORS) {
-      const link = document.createElement("a");
-      link.className = "about-contributor-link";
-      link.textContent = "@" + name;
-      link.href = "#";
-      link.addEventListener("click", (e) => {
-        e.preventDefault();
-        helpers.openExternalSafe("https://github.com/" + name);
-      });
-      contribList.appendChild(link);
-    }
-
-    toggleBtn.addEventListener("click", () => {
-      runtime.about.contributorsExpanded = !runtime.about.contributorsExpanded;
-      contribList.classList.toggle("collapsed", !runtime.about.contributorsExpanded);
-      toggleBtn.textContent = runtime.about.contributorsExpanded
-        ? t("aboutContributorsHide")
-        : t("aboutContributorsShowAll");
-    });
-
     const footer = document.createElement("div");
     footer.className = "about-footer";
     footer.textContent = t("aboutFooter");
@@ -337,13 +278,6 @@
         ));
       }
 
-      if (safe.upstreamUrl) {
-        infoSection.appendChild(buildAboutLinkRow("Upstream", safe.upstreamUrl, safe.upstreamName));
-      }
-
-      infoSection.appendChild(maintainersRow);
-      infoSection.appendChild(contribRow);
-      infoSection.appendChild(contribList);
     });
   }
 
@@ -351,7 +285,6 @@
     runtime = core.runtime;
     helpers = core.helpers;
     ops = core.ops;
-    i18n = core.i18n;
     core.tabs.about = {
       render,
     };
