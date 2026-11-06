@@ -62,6 +62,7 @@ function initWithConfig(cfg) {
   _fileScales = os.fileScales || {};
   _fileOffsets = os.fileOffsets || {};
   _transitions = tc.transitions || {};
+  rasterMotionController?.configure(tc.rasterMotion);
   _miniFlipAssets = !!tc.miniFlipAssets;
 
   applyObjectScaleStyle(clawdEl, getObjectSvgName(clawdEl), null);
@@ -127,6 +128,7 @@ function setLowPowerSvgPaused(paused) {
   const next = !!paused;
   if (lowPowerSvgPaused === next) return;
   lowPowerSvgPaused = next;
+  rasterMotionController?.setPaused(next || !!document.hidden);
   if (next) _cancelLayerAnimLoop();
   if (window.electronAPI && typeof window.electronAPI.setLowPowerIdlePaused === "function") {
     window.electronAPI.setLowPowerIdlePaused(next);
@@ -388,6 +390,23 @@ let _layerTargetDy = 0;           // raw dy from tick.js
 let _layerAnimFrame = null;        // requestAnimationFrame handle
 let _layeredTrackingObj = null;    // the <object> element currently tracked (guard against re-init)
 const LAYER_SETTLE_EPSILON = 0.02;
+
+const rasterMotionController = window.ClawdRasterMotion?.createRasterMotionController({
+  requestFrame: (callback) => requestAnimationFrame(callback),
+  cancelFrame: (handle) => cancelAnimationFrame(handle),
+  now: () => Date.now(),
+}) || null;
+const rasterMotionPreference = typeof window.matchMedia === "function"
+  ? window.matchMedia("(prefers-reduced-motion: reduce)") : null;
+const updateRasterMotionPreference = () => rasterMotionController?.setReducedMotion(!!rasterMotionPreference?.matches);
+updateRasterMotionPreference();
+rasterMotionPreference?.addEventListener?.("change", updateRasterMotionPreference);
+document.addEventListener?.("visibilitychange", () => rasterMotionController?.setPaused(!!document.hidden || lowPowerSvgPaused));
+window.addEventListener?.("beforeunload", () => rasterMotionController?.detach());
+
+function getFadeDuration(file, direction) {
+  return rasterMotionPreference?.matches ? 0 : ((_transitions[file] && _transitions[file][direction]) || 0);
+}
 
 initWithConfig(tc);
 
@@ -766,6 +785,7 @@ function forceImageChannelReload(file, state, allowImageFallback = true) {
 }
 
 function swapToFile(file, state, useObjectChannel, options = {}) {
+  rasterMotionController?.detach();
   const swapToken = ++activeSwapToken;
   const allowImageFallback = options.allowImageFallback !== false;
   if (pendingNext) {
@@ -791,8 +811,8 @@ function swapToFile(file, state, useObjectChannel, options = {}) {
     const swap = () => {
       if (pendingNext !== next) return;
       if (swapToken === activeSwapToken) clearSwapVisibilityRescueTimer();
-      const fadeInMs = (_transitions[file] && _transitions[file].in) || 0;
-      const fadeOutMs = (currentDisplayedSvg && _transitions[currentDisplayedSvg] && _transitions[currentDisplayedSvg].out) || 0;
+      const fadeInMs = getFadeDuration(file, "in");
+      const fadeOutMs = getFadeDuration(currentDisplayedSvg, "out");
 
       if (fadeInMs > 0) {
         next.style.transition = `opacity ${fadeInMs}ms ease-in`;
@@ -857,8 +877,8 @@ function swapToFile(file, state, useObjectChannel, options = {}) {
     const swap = () => {
       if (pendingNext !== next) return;
       if (swapToken === activeSwapToken) clearSwapVisibilityRescueTimer();
-      const fadeInMs = (_transitions[file] && _transitions[file].in) || 0;
-      const fadeOutMs = (currentDisplayedSvg && _transitions[currentDisplayedSvg] && _transitions[currentDisplayedSvg].out) || 0;
+      const fadeInMs = getFadeDuration(file, "in");
+      const fadeOutMs = getFadeDuration(currentDisplayedSvg, "out");
 
       if (fadeInMs > 0) {
         next.style.transition = `opacity ${fadeInMs}ms ease-in`;
@@ -881,6 +901,7 @@ function swapToFile(file, state, useObjectChannel, options = {}) {
       clawdEl = next;
       currentDisplayedSvg = file;
       currentDisplayedAssetUrl = url;
+      rasterMotionController?.attach(next, state);
       scheduleLowPowerIdlePause();
     };
 
@@ -936,6 +957,7 @@ window.electronAPI.onStateChange((state, svg) => {
 
   if ((alreadyDisplayed && displayedChannelMatches) || (alreadyPending && pendingChannelMatches)) {
     if (alreadyDisplayed) {
+      rasterMotionController?.attach(clawdEl, state);
       if (needsEyeTracking(state) && !eyeTarget && !_trackingLayers) {
         if (clawdEl.tagName === "OBJECT") attachEyeTracking(clawdEl);
       } else if (!needsEyeTracking(state)) {
@@ -1262,6 +1284,8 @@ window.electronAPI.onEyeMove((dx, dy) => {
     _cancelLayerAnimLoop();
     return;
   }
+
+  rasterMotionController?.move(effectiveDx, dy, _themeMaxOffset);
 
   if (_trackingLayers) {
     // Layered tracking: store targets, RAF loop handles easing

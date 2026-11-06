@@ -80,7 +80,7 @@ class FakeElement {
   }
 }
 
-function createRendererHarness() {
+function createRendererHarness(themeOverrides = {}) {
   const timers = [];
   const audioInstances = [];
   const electronHandlers = {};
@@ -118,6 +118,7 @@ function createRendererHarness() {
       themeConfig: {
         assetsPath: "../assets/svg",
         eyeTracking: { states: ["idle"] },
+        ...themeOverrides,
       },
       electronAPI,
       getComputedStyle: (el) => ({ opacity: el.style.opacity || "1" }),
@@ -151,6 +152,8 @@ function createRendererHarness() {
     },
   };
   context.globalThis = context;
+  vm.runInNewContext(readNormalized(path.join(__dirname, "..", "src", "raster-motion.js")), context);
+  context.window.ClawdRasterMotion = context.ClawdRasterMotion;
 
   const source = `${readNormalized(RENDERER)}
 globalThis.__rendererTest = {
@@ -176,6 +179,30 @@ globalThis.__rendererTest = {
 }
 
 describe("renderer low-power idle mode", () => {
+  it("applies opt-in raster following only to idle images and preserves same-state playback", () => {
+    const harness = createRendererHarness({ rasterMotion: { enabled: true, states: ["idle"] } });
+    harness.electronHandlers.onStateChange("idle", "idle.png");
+    const idle = harness.api.pendingNext;
+    idle.listeners.get("load")();
+    harness.electronHandlers.onEyeMove(3, 0);
+    const frame = harness.activeTimers().find((timer) => timer.ms === 16);
+    assert.ok(frame, "pointer response should schedule a frame");
+    frame.callback();
+    assert.ok(parseFloat(idle.style.translate) > 0);
+    const source = idle.src;
+    const translation = idle.style.translate;
+    harness.electronHandlers.onStateChange("idle", "idle.png");
+    assert.equal(harness.api.clawdEl, idle);
+    assert.equal(idle.src, source);
+    assert.equal(idle.style.translate, translation);
+    harness.electronHandlers.onStateChange("working", "work.png");
+    assert.equal(idle.style.translate, "");
+    const working = harness.api.pendingNext;
+    working.listeners.get("load")();
+    harness.electronHandlers.onEyeMove(3, 0);
+    assert.ok(!working.style.translate);
+  });
+
   it("waits for an animation boundary before pausing the current SVG", () => {
     const source = readNormalized(RENDERER);
 

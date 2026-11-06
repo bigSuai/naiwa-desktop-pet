@@ -72,6 +72,7 @@ function createThemeContext(theme, options = {}) {
       assetsPath: getRendererAssetsPath(),
       sourceAssetsPath: getRendererSourceAssetsPath(),
       eyeTracking: theme.eyeTracking,
+      ...(theme.rasterMotion ? { rasterMotion: theme.rasterMotion } : {}),
       glyphFlips: theme.miniMode ? theme.miniMode.glyphFlips : {},
       miniFlipAssets: theme.miniMode ? !!theme.miniMode.flipAssets : false,
       dragSvg: theme.reactions && theme.reactions.drag ? theme.reactions.drag.file : null,

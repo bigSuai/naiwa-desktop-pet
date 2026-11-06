@@ -2,7 +2,7 @@
   "schemaVersion": 1,
   "name": "奶蛙 Naiwa",
   "author": "bigSuai; upstream Codex Voice Input contributors",
-  "version": "1.2.1",
+  "version": "1.3.0",
   "description": "奶蛙完整动作：敲代码、拖动挣扎、思考、打盹、睡醒、扫地、抛球、搭积木。透明动画与连续过渡。",
   "repo": "https://github.com/bigSuai/naiwa-desktop-pet",
   "viewBox": {
@@ -31,7 +31,31 @@
   },
   "eyeTracking": {
     "enabled": false,
-    "states": []
+    "states": [],
+    "eyeRatioX": 0.49,
+    "eyeRatioY": 0.22,
+    "maxOffset": 3
+  },
+  "rasterMotion": {
+    "enabled": true,
+    "states": ["idle", "mini-idle"],
+    "maxX": 1.8,
+    "maxY": 0.6,
+    "maxRotation": 0.45,
+    "easeMs": 110
+  },
+  "transitions": {
+    "naiwa-motion-idle.png": { "in": 90, "out": 80 },
+    "naiwa-motion-thinking.png": { "in": 80, "out": 80 },
+    "naiwa-motion-working.png": { "in": 80, "out": 80 },
+    "naiwa-motion-dozing.png": { "in": 110, "out": 80 },
+    "naiwa-motion-sleeping.png": { "in": 110, "out": 80 },
+    "naiwa-motion-patrol.png": { "in": 90, "out": 80 },
+    "naiwa-motion-reading.png": { "in": 90, "out": 80 },
+    "naiwa-motion-bubble.png": { "in": 90, "out": 80 },
+    "naiwa-motion-error.png": { "in": 0, "out": 80 },
+    "naiwa-motion-notification.png": { "in": 0, "out": 80 },
+    "naiwa-classic-belly-laugh.png": { "in": 0, "out": 80 }
   },
   "states": {
     "idle": [
@@ -104,15 +128,15 @@
   "idleAnimations": [
     {
       "file": "naiwa-motion-patrol.png",
-      "duration": 6000
+      "duration": 6500
     },
     {
       "file": "naiwa-motion-bubble.png",
-      "duration": 6000
+      "duration": 9000
     },
     {
       "file": "naiwa-motion-reading.png",
-      "duration": 6000
+      "duration": 10000
     },
     {
       "file": "naiwa-classic-belly-laugh.png",
@@ -343,15 +367,15 @@
     },
     "clickLeft": {
       "file": "naiwa-motion-click-left.png",
-      "duration": 3000
+      "duration": 1200
     },
     "clickRight": {
       "file": "naiwa-motion-error.png",
-      "duration": 3000
+      "duration": 1200
     },
     "annoyed": {
       "file": "naiwa-motion-error.png",
-      "duration": 3000
+      "duration": 1800
     },
     "double": {
       "files": [
