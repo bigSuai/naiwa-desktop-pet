@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'self'; script-src 'self'; img-src 'self' data: file:">
+<title>奶蛙聊天</title>
+<link rel="stylesheet" href="chat.css">
+</head>
+<body>
+<div class="app">
+  <header class="header">
+    <div class="title-row">
+      <h1>奶蛙聊天</h1>
+      <span class="status-dot" id="statusDot"></span>
+      <button class="clear-history" id="clearHistory" type="button" title="清空聊天记录">清空</button>
+      <button class="chat-settings" id="chatSettings" type="button" title="聊天设置" aria-label="聊天设置">&#9881;</button>
+    </div>
+    <div class="model-line" id="modelLine">正在读取聊天配置</div>
+  </header>
+  <main class="messages" id="messages" aria-live="polite"></main>
+  <footer class="composer">
+    <div class="attachments" id="attachments" hidden></div>
+    <div class="input-row">
+      <textarea id="input" rows="1" maxlength="24000" placeholder="和奶蛙聊聊"></textarea>
+      <button id="send" type="button" disabled>发送</button>
+    </div>
+  </footer>
+</div>
+<dialog id="setupDialog" class="setup-dialog" aria-labelledby="setupTitle">
+  <h2 id="setupTitle">聊天设置</h2>
+  <div class="setup-fields">
+    <label for="setupModel">模型</label>
+    <input id="setupModel" type="text" value="gpt-6-luna" maxlength="128" autocomplete="off" spellcheck="false">
+    <label for="setupKey">OpenAI API Key</label>
+    <input id="setupKey" type="password" maxlength="512" autocomplete="off" spellcheck="false" placeholder="输入你的 API Key">
+  </div>
+  <button id="setupKeyPage" class="key-page" type="button">OpenAI 官方密钥管理</button>
+  <p id="setupFeedback" class="setup-feedback" role="status" aria-live="polite"></p>
+  <div class="setup-actions">
+    <button id="setupTest" type="button">测试连接</button>
+    <button id="setupSave" type="button">加密保存</button>
+    <button id="setupCancel" type="button">取消</button>
+  </div>
+</dialog>
+<script src="chat-renderer.js"></script>
+</body>
+</html>
