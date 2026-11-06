@@ -54,6 +54,14 @@ function getStaleSessionDecision(session, options = {}) {
     return { action: "delete", reason: "agent-exit" };
   }
 
+  // A missing agent PID leaves the source as the only observed live process.
+  // Its exit is lifecycle evidence, not a quiet-time guess that work completed.
+  if (isLocalCodexWorkingLikeSession(session)
+    && session.pidReachable && !session.agentPid && session.sourcePid
+    && !isProcessAlive(session.sourcePid)) {
+    return { action: "delete", reason: "codex-source-exit" };
+  }
+
   // GLOBAL reference time hoisted to the top: ack-pending guard and stale
   // branches both consume Math.max(updatedAt, ackedAt). Without this hoist,
   // an ack-then-natural-stale path would revert to raw updatedAt the moment

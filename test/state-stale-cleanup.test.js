@@ -42,6 +42,45 @@ function decision(target, overrides = {}) {
 }
 
 describe("state stale cleanup decisions", () => {
+  it("clears a local Codex orphan when its only known live process has exited", () => {
+    const { result } = decision(session({
+      agentId: "codex", state: "thinking", sourcePid: 20,
+      updatedAt: 1000000 - 15 * 60 * 1000,
+    }));
+    assert.deepStrictEqual(result, { action: "delete", reason: "codex-source-exit" });
+  });
+
+  it("does not wait twenty minutes for an orphaned Codex source exit", () => {
+    const { result } = decision(session({
+      agentId: "codex", state: "working", sourcePid: 20,
+      updatedAt: 1000000 - 10000,
+    }), { staleConfig: { sessionStaleMs: 0, workingStaleMs: 3600000 } });
+    assert.deepStrictEqual(result, { action: "delete", reason: "codex-source-exit" });
+  });
+
+  it("keeps a live Codex agent even when its fallback source process has exited", () => {
+    const { result } = decision(session({
+      agentId: "codex", state: "thinking", agentPid: 10, sourcePid: 20,
+      updatedAt: 1000000 - 15 * 60 * 1000,
+    }), { alivePids: new Set([10]) });
+    assert.deepStrictEqual(result, { action: null });
+  });
+
+  it("does not infer a Codex process exit from missing or never-reachable process metadata", () => {
+    for (const metadata of [{ sourcePid: null }, { sourcePid: 20, pidReachable: false }]) {
+      assert.deepStrictEqual(decision(session({ agentId: "codex", state: "thinking", ...metadata })).result, { action: null });
+    }
+    assert.deepStrictEqual(decision(session({ agentId: "codex", state: "thinking", sourcePid: 20 }), {
+      alivePids: new Set([20]),
+    }).result, { action: null });
+  });
+
+  it("does not apply local process-exit cleanup to a remote Codex session", () => {
+    assert.deepStrictEqual(decision(session({
+      agentId: "codex", state: "working", sourcePid: 20, host: "ssh:remote.example",
+    })).result, { action: null });
+  });
+
   it("deletes immediately when a reachable agent pid is dead before badge checks", () => {
     let badgeCalls = 0;
     const { result, calls } = decision(session({ agentPid: 10, sourcePid: 20 }), {

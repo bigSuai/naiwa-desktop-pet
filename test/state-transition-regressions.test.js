@@ -60,6 +60,43 @@ describe("state transition regressions", () => {
     api.updateSession(id, state, event, { agentId: "claude-code" });
   }
 
+  it("returns an orphaned Codex session to idle without a completion animation or sound", () => {
+    api.cleanup();
+    const living = new Set([20]);
+    ctx.processKill = (pid) => {
+      if (!living.has(pid)) throw Object.assign(new Error("exited"), { code: "ESRCH" });
+    };
+    api = initState(ctx);
+    api.updateSession("codex:orphan", "thinking", "UserPromptSubmit", { agentId: "codex", sourcePid: 20 });
+    assert.equal(api.getCurrentState(), "thinking");
+    living.delete(20);
+    mock.timers.tick(10000);
+    api.cleanStaleSessions();
+    assert.equal(api.sessions.size, 0);
+    assert.equal(api.getCurrentState(), "idle");
+    assert.ok(!ctx.stateChanges.includes("attention"));
+    assert.deepEqual(ctx.sounds, []);
+  });
+
+  it("clearing an orphan preserves another Codex task with a living agent", () => {
+    api.cleanup();
+    const living = new Set([10, 20]);
+    ctx.processKill = (pid) => {
+      if (!living.has(pid)) throw Object.assign(new Error("exited"), { code: "ESRCH" });
+    };
+    api = initState(ctx);
+    api.updateSession("codex:live", "working", "PreToolUse", { agentId: "codex", agentPid: 10, sourcePid: 30 });
+    api.updateSession("codex:orphan", "thinking", "UserPromptSubmit", { agentId: "codex", sourcePid: 20 });
+    living.delete(20);
+    mock.timers.tick(10000);
+    api.cleanStaleSessions();
+    assert.equal(api.sessions.size, 1);
+    assert.ok(api.sessions.has("codex:live"));
+    assert.equal(api.resolveDisplayState(), "working");
+    assert.ok(!ctx.stateChanges.includes("attention"));
+    assert.deepEqual(ctx.sounds, []);
+  });
+
   it("does not revive a queued permission notification after resolution", () => {
     update("a", "working", "PreToolUse");
     update("a", "notification", "PermissionRequest");
