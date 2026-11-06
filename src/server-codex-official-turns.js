@@ -38,6 +38,13 @@ function resolveCodexOfficialHookState(data, requestedState, turns, classifier =
     return { state: requestedState, drop: false };
   }
 
+  // A shared desktop server outlives its temporary, non-persisted sessions.
+  // Do not create activity until the hook has matching transcript identity;
+  // real session logs remain a fallback while a new transcript is being made.
+  if (data.codex_app_server === true && data.codex_transcript_verified === false) {
+    return { state: requestedState, drop: true };
+  }
+
   const event = typeof data.event === "string" ? data.event : "";
   const turnId = typeof data.turn_id === "string" && data.turn_id ? data.turn_id : null;
   const sessionId = typeof data.session_id === "string" && data.session_id ? data.session_id : "default";

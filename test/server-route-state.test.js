@@ -97,6 +97,38 @@ describe("server-route-state health", () => {
 });
 
 describe("server-route-state POST", () => {
+  it("does not create HUD sessions from unverified app-server background hooks", async () => {
+    for (const event of ["SessionStart", "UserPromptSubmit", "PreToolUse", "PostToolUse", "Stop"]) {
+      const turns = new Map();
+      const res = await callStatePost(JSON.stringify({
+        state: "working", event, session_id: "codex:temporary", turn_id: "temporary-turn",
+        agent_id: "codex", hook_source: "codex-official", agent_pid: 456,
+        codex_app_server: true, codex_transcript_verified: false,
+      }), { options: { codexOfficialTurns: turns } });
+      assert.equal(res.statusCode, 204, event);
+      assert.deepEqual(res.calls.updateSession, [], event);
+      assert.equal(turns.size, 0, event);
+    }
+  });
+
+  it("keeps verified same-name desktop sessions independent and accepts legacy CLI hooks", async () => {
+    for (const sessionId of ["codex:user-a", "codex:user-b"]) {
+      const res = await callStatePost(JSON.stringify({
+        state: "working", event: "PreToolUse", session_id: sessionId,
+        agent_id: "codex", hook_source: "codex-official", session_title: "Same project",
+        codex_app_server: true, codex_transcript_verified: true,
+      }));
+      assert.equal(res.statusCode, 200);
+      assert.equal(res.calls.updateSession[0][0], sessionId);
+    }
+    const legacy = await callStatePost(JSON.stringify({
+      state: "working", event: "PreToolUse", session_id: "codex:legacy",
+      agent_id: "codex", hook_source: "codex-official",
+    }));
+    assert.equal(legacy.statusCode, 200);
+    assert.equal(legacy.calls.updateSession.length, 1);
+  });
+
   it("passes normalized metadata to updateSession", async () => {
     const res = await callStatePost(JSON.stringify({
       state: "working",

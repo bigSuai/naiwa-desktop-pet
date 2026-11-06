@@ -196,7 +196,8 @@ function shouldReportForegroundWtHwnd(event) {
 }
 
 function applyLocalProcessFields(body, resolve, options = {}) {
-  const { stablePid, agentPid, detectedEditor, pidChain, foregroundWtHwnd } = resolve();
+  const processInfo = resolve();
+  const { stablePid, agentPid, detectedEditor, pidChain, foregroundWtHwnd } = processInfo;
   const sourcePid = options.preferAgentPid && agentPid ? agentPid : stablePid;
   body.source_pid = sourcePid;
   if (detectedEditor) body.editor = detectedEditor;
@@ -205,6 +206,7 @@ function applyLocalProcessFields(body, resolve, options = {}) {
   if (shouldReportForegroundWtHwnd(options.event, foregroundWtHwnd) && foregroundWtHwnd) {
     body.wt_hwnd = String(foregroundWtHwnd);
   }
+  return processInfo;
 }
 
 function resolveCodexSessionRole(payload, sessionMeta) {
@@ -368,10 +370,15 @@ function buildStateBody(payload, resolve) {
   if (process.env.CLAWD_REMOTE) {
     body.host = readHostPrefix();
   } else {
-    applyLocalProcessFields(body, resolve, {
+    const processInfo = applyLocalProcessFields(body, resolve, {
       preferAgentPid: isCodexDesktopSession(payload, sessionMeta),
       event,
     });
+    if (/(?:^|\s)app-server(?:\s|$)/i.test(processInfo.agentCommandLine || "")) {
+      body.codex_app_server = true;
+      const metadataId = firstString(sessionMeta && sessionMeta.id, sessionMeta && sessionMeta.session_id);
+      body.codex_transcript_verified = !!metadataId && normalizeCodexSessionId(metadataId) === sessionId;
+    }
   }
 
   return body;

@@ -55,6 +55,41 @@ function withTempCodexIndex(lines, fn) {
 }
 
 describe("Codex official hook", () => {
+  it("does not treat a shared app-server PID as proof of a persisted user session", () => {
+    const body = buildStateBody({ hook_event_name: "UserPromptSubmit", session_id: "temporary-session" }, () => ({
+      ...mockResolve(), agentCommandLine: 'codex.exe app-server --analytics-default-enabled',
+    }));
+    assert.equal(body.codex_app_server, true);
+    assert.equal(body.codex_transcript_verified, false);
+    assert.equal(body.agent_pid, 456);
+  });
+
+  it("verifies app-server activity against matching transcript metadata", () => {
+    withTempTranscript([JSON.stringify({ type: "session_meta", payload: {
+      id: "019d23d4-f1a9-7633-b9c7-758327137228", originator: "Codex Desktop", source: "vscode", thread_source: "user",
+    } })], (transcriptPath) => {
+      const body = buildStateBody({ hook_event_name: "UserPromptSubmit", session_id: "official-session", transcript_path: transcriptPath }, () => ({
+        ...mockResolve(), agentCommandLine: 'codex.exe app-server',
+      }));
+      assert.equal(body.codex_app_server, true);
+      assert.equal(body.codex_transcript_verified, true);
+    });
+  });
+
+  it("does not verify an unrelated transcript or gate standalone CLI hooks", () => {
+    withTempTranscript([JSON.stringify({ type: "session_meta", payload: { id: "another-session" } })], (transcriptPath) => {
+      const body = buildStateBody({ hook_event_name: "UserPromptSubmit", session_id: "temporary-session", transcript_path: transcriptPath }, () => ({
+        ...mockResolve(), agentCommandLine: 'codex.exe app-server',
+      }));
+      assert.equal(body.codex_transcript_verified, false);
+    });
+    const cli = buildStateBody({ hook_event_name: "UserPromptSubmit", session_id: "standalone" }, () => ({
+      ...mockResolve(), agentCommandLine: 'codex.exe exec --ephemeral',
+    }));
+    assert.equal(cli.codex_app_server, undefined);
+    assert.equal(cli.codex_transcript_verified, undefined);
+  });
+
   it("normalizes session ids with the codex prefix", () => {
     assert.strictEqual(normalizeCodexSessionId("abc"), "codex:abc");
     assert.strictEqual(normalizeCodexSessionId("codex:abc"), "codex:abc");
