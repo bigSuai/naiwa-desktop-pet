@@ -24,6 +24,13 @@ jobs:
         with:
           node-version: 24
           cache: npm
+      - uses: actions/cache@v4
+        with:
+          path: |
+            ~/AppData/Local/electron/Cache
+            ~/AppData/Local/electron-builder/Cache
+          key: windows-electron-builder-${{ hashFiles('package-lock.json') }}
+          restore-keys: windows-electron-builder-
       - run: npm ci
       - run: npm test
       - run: npm run fetch:sidecars -- --target windows-x64,windows-arm64
@@ -41,19 +48,20 @@ jobs:
           for (const arch of ['x64', 'arm64']) {
             const root = path.join('dist', arch === 'x64' ? 'win-unpacked' : 'win-arm64-unpacked');
             const archive = path.join(root, 'resources', 'app.asar');
+            const readPacked = file => asar.extractFile(archive, path.normalize(file));
             const entries = asar.listPackage(archive).map(name => name.replaceAll('\\', '/'));
             const forbidden = /(^|\/)(\.clawd-data|\.env|clawd-prefs\.json|chat-history\.json|chat-config\.json|chat-credentials\.json|.*\.dpapi)(\/|$)/i;
             assert.ok(!entries.some(name => forbidden.test(name)), 'Private data included');
-            assert.equal(JSON.parse(asar.extractFile(archive, 'package.json')).version, version);
+            assert.equal(JSON.parse(readPacked('package.json')).version, version);
             const required = ['LICENSE', 'NOTICE.md', 'assets/LICENSE', 'src/raster-motion.js', 'src/updater.js', 'themes/naiwa/theme.json', 'themes/naiwa/THIRD-PARTY-NOTICES.md', 'themes/naiwa/UPSTREAM-LICENSE.txt'];
-            for (const file of required) assert.ok(asar.extractFile(archive, file).length, 'Missing ' + file);
+            for (const file of required) assert.ok(readPacked(file).length, 'Missing ' + file);
             for (const file of ['src/raster-motion.js', 'src/updater.js', 'themes/naiwa/theme.json']) {
               const normalize = data => data.toString('utf8').replace(/\r\n/g, '\n');
-              assert.equal(normalize(asar.extractFile(archive, file)), normalize(fs.readFileSync(file)), 'Source mismatch: ' + file);
+              assert.equal(normalize(readPacked(file)), normalize(fs.readFileSync(file)), 'Source mismatch: ' + file);
             }
             for (const name of ['idle', 'thinking', 'working', 'dozing', 'sleeping']) {
               const file = 'themes/naiwa/assets/naiwa-motion-' + name + '.png';
-              assert.ok(asar.extractFile(archive, file).equals(fs.readFileSync(file)), 'Animation mismatch: ' + name);
+              assert.ok(readPacked(file).equals(fs.readFileSync(file)), 'Animation mismatch: ' + name);
             }
             const pe = fs.readFileSync(path.join(root, '奶蛙桌宠.exe'));
             assert.equal(pe.readUInt16LE(pe.readUInt32LE(0x3c) + 4), arch === 'x64' ? 0x8664 : 0xaa64);
