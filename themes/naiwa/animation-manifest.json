@@ -1,0 +1,247 @@
+{
+  "idle": {
+    "source": "idle",
+    "frames": 90,
+    "fps": 30,
+    "durationSeconds": 3,
+    "motion": "bidirectional optical-flow interpolation; original art 8 fps"
+  },
+  "yawning": {
+    "source": "busy",
+    "frames": 90,
+    "fps": 30,
+    "durationSeconds": 3,
+    "motion": "bidirectional optical-flow interpolation; original art 8 fps"
+  },
+  "dozing": {
+    "source": "error",
+    "frames": 90,
+    "fps": 30,
+    "durationSeconds": 3,
+    "motion": "bidirectional optical-flow interpolation; original art 8 fps"
+  },
+  "collapsing": {
+    "source": "error",
+    "frames": 90,
+    "fps": 30,
+    "durationSeconds": 3,
+    "motion": "bidirectional optical-flow interpolation; original art 8 fps"
+  },
+  "thinking": {
+    "source": "listen",
+    "frames": 90,
+    "fps": 30,
+    "durationSeconds": 3,
+    "motion": "bidirectional optical-flow interpolation; original art 8 fps"
+  },
+  "working": {
+    "source": "idle",
+    "frames": 90,
+    "fps": 30,
+    "durationSeconds": 3,
+    "motion": "bidirectional optical-flow interpolation; original art 8 fps"
+  },
+  "juggling": {
+    "source": "busy",
+    "frames": 90,
+    "fps": 30,
+    "durationSeconds": 3,
+    "motion": "bidirectional optical-flow interpolation; original art 8 fps"
+  },
+  "sweeping": {
+    "source": "idle",
+    "frames": 90,
+    "fps": 30,
+    "durationSeconds": 3,
+    "motion": "bidirectional optical-flow interpolation; original art 8 fps"
+  },
+  "error": {
+    "source": "error",
+    "frames": 90,
+    "fps": 30,
+    "durationSeconds": 3,
+    "motion": "bidirectional optical-flow interpolation; original art 8 fps"
+  },
+  "attention": {
+    "source": "target",
+    "frames": 90,
+    "fps": 30,
+    "durationSeconds": 3,
+    "motion": "bidirectional optical-flow interpolation; original art 8 fps"
+  },
+  "notification": {
+    "source": "listen",
+    "frames": 90,
+    "fps": 30,
+    "durationSeconds": 3,
+    "motion": "bidirectional optical-flow interpolation; original art 8 fps"
+  },
+  "carrying": {
+    "source": "idle",
+    "frames": 90,
+    "fps": 30,
+    "durationSeconds": 3,
+    "motion": "bidirectional optical-flow interpolation; original art 8 fps"
+  },
+  "sleeping": {
+    "source": "error",
+    "frames": 90,
+    "fps": 30,
+    "durationSeconds": 3,
+    "motion": "bidirectional optical-flow interpolation; original art 8 fps"
+  },
+  "waking": {
+    "source": "busy",
+    "frames": 90,
+    "fps": 30,
+    "durationSeconds": 3,
+    "motion": "bidirectional optical-flow interpolation; original art 8 fps"
+  },
+  "building": {
+    "source": "idle",
+    "frames": 90,
+    "fps": 30,
+    "durationSeconds": 3,
+    "motion": "bidirectional optical-flow interpolation; original art 8 fps"
+  },
+  "headphones": {
+    "source": "busy",
+    "frames": 90,
+    "fps": 30,
+    "durationSeconds": 3,
+    "motion": "bidirectional optical-flow interpolation; original art 8 fps"
+  },
+  "reading": {
+    "source": "idle",
+    "frames": 90,
+    "fps": 30,
+    "durationSeconds": 3,
+    "motion": "bidirectional optical-flow interpolation; original art 8 fps"
+  },
+  "bubble": {
+    "source": "listen",
+    "frames": 90,
+    "fps": 30,
+    "durationSeconds": 3,
+    "motion": "bidirectional optical-flow interpolation; original art 8 fps"
+  },
+  "patrol": {
+    "source": "idle",
+    "frames": 90,
+    "fps": 30,
+    "durationSeconds": 3,
+    "motion": "bidirectional optical-flow interpolation; original art 8 fps"
+  },
+  "debugger": {
+    "source": "listen",
+    "frames": 90,
+    "fps": 30,
+    "durationSeconds": 3,
+    "motion": "bidirectional optical-flow interpolation; original art 8 fps"
+  },
+  "drag": {
+    "source": "busy",
+    "frames": 90,
+    "fps": 30,
+    "durationSeconds": 3,
+    "motion": "bidirectional optical-flow interpolation; original art 8 fps"
+  },
+  "click-left": {
+    "source": "listen",
+    "frames": 90,
+    "fps": 30,
+    "durationSeconds": 3,
+    "motion": "bidirectional optical-flow interpolation; original art 8 fps"
+  },
+  "click-right": {
+    "source": "listen",
+    "frames": 90,
+    "fps": 30,
+    "durationSeconds": 3,
+    "motion": "bidirectional optical-flow interpolation; original art 8 fps"
+  },
+  "annoyed": {
+    "source": "busy",
+    "frames": 90,
+    "fps": 30,
+    "durationSeconds": 3,
+    "motion": "bidirectional optical-flow interpolation; original art 8 fps"
+  },
+  "double": {
+    "source": "target",
+    "frames": 90,
+    "fps": 30,
+    "durationSeconds": 3,
+    "motion": "bidirectional optical-flow interpolation; original art 8 fps"
+  },
+  "double-jump": {
+    "source": "target",
+    "frames": 90,
+    "fps": 30,
+    "durationSeconds": 3,
+    "motion": "bidirectional optical-flow interpolation; original art 8 fps"
+  },
+  "mini-idle": {
+    "source": "idle",
+    "frames": 90,
+    "fps": 30,
+    "durationSeconds": 3,
+    "motion": "bidirectional optical-flow interpolation; original art 8 fps"
+  },
+  "mini-alert": {
+    "source": "listen",
+    "frames": 90,
+    "fps": 30,
+    "durationSeconds": 3,
+    "motion": "bidirectional optical-flow interpolation; original art 8 fps"
+  },
+  "mini-happy": {
+    "source": "target",
+    "frames": 90,
+    "fps": 30,
+    "durationSeconds": 3,
+    "motion": "bidirectional optical-flow interpolation; original art 8 fps"
+  },
+  "mini-enter": {
+    "source": "idle",
+    "frames": 90,
+    "fps": 30,
+    "durationSeconds": 3,
+    "motion": "bidirectional optical-flow interpolation; original art 8 fps"
+  },
+  "mini-peek": {
+    "source": "listen",
+    "frames": 90,
+    "fps": 30,
+    "durationSeconds": 3,
+    "motion": "bidirectional optical-flow interpolation; original art 8 fps"
+  },
+  "mini-working": {
+    "source": "idle",
+    "frames": 90,
+    "fps": 30,
+    "durationSeconds": 3,
+    "motion": "bidirectional optical-flow interpolation; original art 8 fps"
+  },
+  "mini-crabwalk": {
+    "source": "idle",
+    "frames": 90,
+    "fps": 30,
+    "durationSeconds": 3,
+    "motion": "bidirectional optical-flow interpolation; original art 8 fps"
+  },
+  "mini-enter-sleep": {
+    "source": "error",
+    "frames": 90,
+    "fps": 30,
+    "durationSeconds": 3,
+    "motion": "bidirectional optical-flow interpolation; original art 8 fps"
+  },
+  "mini-sleep": {
+    "source": "error",
+    "frames": 90,
+    "fps": 30,
+    "durationSeconds": 3,
+    "motion": "bidirectional optical-flow interpolation; original art 8 fps"
+  }
+}

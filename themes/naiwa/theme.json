@@ -1,0 +1,422 @@
+{
+  "schemaVersion": 1,
+  "name": "奶蛙 Naiwa",
+  "author": "bigSuai; upstream Codex Voice Input contributors",
+  "version": "1.2.1",
+  "description": "奶蛙完整动作：敲代码、拖动挣扎、思考、打盹、睡醒、扫地、抛球、搭积木。透明动画与连续过渡。",
+  "repo": "https://github.com/bigSuai/naiwa-desktop-pet",
+  "viewBox": {
+    "x": 0,
+    "y": 0,
+    "width": 240,
+    "height": 240
+  },
+  "layout": {
+    "contentBox": {
+      "x": 60,
+      "y": 36,
+      "width": 120,
+      "height": 186
+    },
+    "marginBox": {
+      "x": 25,
+      "y": 8,
+      "width": 190,
+      "height": 224
+    },
+    "centerX": 120,
+    "baselineY": 222,
+    "visibleHeightRatio": 0.775,
+    "baselineBottomRatio": 0.075
+  },
+  "eyeTracking": {
+    "enabled": false,
+    "states": []
+  },
+  "states": {
+    "idle": [
+      "naiwa-motion-idle.png"
+    ],
+    "yawning": [
+      "naiwa-motion-yawning.png"
+    ],
+    "dozing": [
+      "naiwa-motion-dozing.png"
+    ],
+    "collapsing": [
+      "naiwa-motion-collapsing.png"
+    ],
+    "thinking": [
+      "naiwa-motion-thinking.png"
+    ],
+    "working": [
+      "naiwa-motion-working.png"
+    ],
+    "juggling": [
+      "naiwa-motion-juggling.png"
+    ],
+    "sweeping": [
+      "naiwa-motion-sweeping.png"
+    ],
+    "error": [
+      "naiwa-motion-error.png"
+    ],
+    "attention": [
+      "naiwa-classic-belly-laugh.png"
+    ],
+    "notification": [
+      "naiwa-motion-notification.png"
+    ],
+    "carrying": [
+      "naiwa-motion-carrying.png"
+    ],
+    "sleeping": [
+      "naiwa-motion-sleeping.png"
+    ],
+    "waking": [
+      "naiwa-motion-waking.png"
+    ]
+  },
+  "workingTiers": [
+    {
+      "minSessions": 3,
+      "file": "naiwa-motion-building.png"
+    },
+    {
+      "minSessions": 2,
+      "file": "naiwa-motion-headphones.png"
+    },
+    {
+      "minSessions": 1,
+      "file": "naiwa-motion-working.png"
+    }
+  ],
+  "jugglingTiers": [
+    {
+      "minSessions": 2,
+      "file": "naiwa-motion-juggling.png"
+    },
+    {
+      "minSessions": 1,
+      "file": "naiwa-motion-headphones.png"
+    }
+  ],
+  "idleAnimations": [
+    {
+      "file": "naiwa-motion-patrol.png",
+      "duration": 6000
+    },
+    {
+      "file": "naiwa-motion-bubble.png",
+      "duration": 6000
+    },
+    {
+      "file": "naiwa-motion-reading.png",
+      "duration": 6000
+    },
+    {
+      "file": "naiwa-classic-belly-laugh.png",
+      "duration": 4500
+    }
+  ],
+  "displayHintMap": {
+    "clawd-working-building.svg": "naiwa-motion-building.png",
+    "clawd-working-typing.svg": "naiwa-motion-working.png",
+    "clawd-working-juggling.svg": "naiwa-motion-juggling.png",
+    "clawd-working-conducting.svg": "naiwa-motion-juggling.png",
+    "clawd-working-debugger.svg": "naiwa-motion-thinking.png",
+    "clawd-working-thinking.svg": "naiwa-motion-thinking.png",
+    "clawd-headphones-groove.svg": "naiwa-motion-headphones.png",
+    "clawd-idle-reading.svg": "naiwa-motion-reading.png",
+    "clawd-idle-bubble.svg": "naiwa-motion-bubble.png"
+  },
+  "updateVisuals": {
+    "checking": "naiwa-motion-thinking.png"
+  },
+  "timings": {
+    "minDisplay": {
+      "attention": 4000,
+      "error": 5000,
+      "sweeping": 5500,
+      "notification": 5000,
+      "carrying": 3000,
+      "working": 1000,
+      "thinking": 1000
+    },
+    "autoReturn": {
+      "attention": 4000,
+      "error": 5000,
+      "sweeping": 300000,
+      "notification": 5000,
+      "carrying": 3000
+    },
+    "yawnDuration": 3000,
+    "wakeDuration": 1500,
+    "deepSleepTimeout": 600000,
+    "mouseIdleTimeout": 20000,
+    "mouseSleepTimeout": 60000
+  },
+  "hitBoxes": {
+    "default": {
+      "x": 62,
+      "y": 38,
+      "w": 115,
+      "h": 184
+    },
+    "sleeping": {
+      "x": 46,
+      "y": 120,
+      "w": 150,
+      "h": 103
+    },
+    "wide": {
+      "x": 40,
+      "y": 30,
+      "w": 170,
+      "h": 195
+    }
+  },
+  "fileHitBoxes": {
+    "naiwa-working.png": {
+      "x": 45,
+      "y": 38,
+      "w": 130,
+      "h": 184
+    },
+    "naiwa-motion-idle.png": {
+      "x": 69,
+      "y": 33,
+      "w": 101,
+      "h": 192
+    },
+    "naiwa-motion-thinking.png": {
+      "x": 72,
+      "y": 34,
+      "w": 97,
+      "h": 190
+    },
+    "naiwa-motion-error.png": {
+      "x": 66,
+      "y": 34,
+      "w": 106,
+      "h": 191
+    },
+    "naiwa-motion-attention.png": {
+      "x": 62,
+      "y": 34,
+      "w": 116,
+      "h": 189
+    },
+    "naiwa-motion-notification.png": {
+      "x": 62,
+      "y": 33,
+      "w": 115,
+      "h": 192
+    },
+    "naiwa-motion-working.png": {
+      "x": 33,
+      "y": 45,
+      "w": 174,
+      "h": 179
+    },
+    "naiwa-motion-patrol.png": {
+      "x": 58,
+      "y": 55,
+      "w": 124,
+      "h": 169
+    },
+    "naiwa-motion-jump.png": {
+      "x": 72,
+      "y": 34,
+      "w": 97,
+      "h": 191
+    },
+    "naiwa-motion-laugh.png": {
+      "x": 68,
+      "y": 33,
+      "w": 104,
+      "h": 191
+    },
+    "naiwa-motion-carrying.png": {
+      "x": 39,
+      "y": 33,
+      "w": 160,
+      "h": 191
+    },
+    "naiwa-motion-yawning.png": {
+      "x": 66,
+      "y": 33,
+      "w": 108,
+      "h": 191
+    },
+    "naiwa-motion-dozing.png": {
+      "x": 59,
+      "y": 33,
+      "w": 122,
+      "h": 191
+    },
+    "naiwa-motion-collapsing.png": {
+      "x": 32,
+      "y": 39,
+      "w": 175,
+      "h": 185
+    },
+    "naiwa-motion-sleeping.png": {
+      "x": 33,
+      "y": 131,
+      "w": 175,
+      "h": 94
+    },
+    "naiwa-motion-waking.png": {
+      "x": 31,
+      "y": 29,
+      "w": 178,
+      "h": 196
+    },
+    "naiwa-motion-sweeping.png": {
+      "x": 33,
+      "y": 54,
+      "w": 174,
+      "h": 171
+    },
+    "naiwa-motion-juggling.png": {
+      "x": 64,
+      "y": 33,
+      "w": 111,
+      "h": 192
+    },
+    "naiwa-motion-headphones.png": {
+      "x": 62,
+      "y": 34,
+      "w": 117,
+      "h": 191
+    },
+    "naiwa-motion-building.png": {
+      "x": 34,
+      "y": 34,
+      "w": 172,
+      "h": 191
+    },
+    "naiwa-motion-reading.png": {
+      "x": 57,
+      "y": 33,
+      "w": 128,
+      "h": 192
+    },
+    "naiwa-motion-bubble.png": {
+      "x": 47,
+      "y": 34,
+      "w": 146,
+      "h": 191
+    },
+    "naiwa-motion-click-left.png": {
+      "x": 50,
+      "y": 25,
+      "w": 140,
+      "h": 200
+    },
+    "naiwa-classic-belly-laugh.png": {
+      "x": 51,
+      "y": 34,
+      "w": 137,
+      "h": 191
+    }
+  },
+  "wideHitboxFiles": [
+    "naiwa-error.png",
+    "naiwa-notification.png",
+    "naiwa-motion-carrying.png",
+    "naiwa-motion-juggling.png",
+    "naiwa-motion-sweeping.png",
+    "naiwa-motion-building.png"
+  ],
+  "sleepingHitboxFiles": [
+    "naiwa-sleeping-smooth.svg",
+    "naiwa-collapsing.png",
+    "naiwa-motion-sleeping.png",
+    "naiwa-motion-collapsing.png"
+  ],
+  "reactions": {
+    "drag": {
+      "file": "naiwa-motion-carrying.png",
+      "duration": 3000
+    },
+    "clickLeft": {
+      "file": "naiwa-motion-click-left.png",
+      "duration": 3000
+    },
+    "clickRight": {
+      "file": "naiwa-motion-error.png",
+      "duration": 3000
+    },
+    "annoyed": {
+      "file": "naiwa-motion-error.png",
+      "duration": 3000
+    },
+    "double": {
+      "files": [
+        "naiwa-classic-belly-laugh.png",
+        "naiwa-motion-jump.png"
+      ],
+      "duration": 3000
+    }
+  },
+  "miniMode": {
+    "supported": true,
+    "offsetRatio": 0.486,
+    "states": {
+      "mini-idle": [
+        "naiwa-motion-idle.png"
+      ],
+      "mini-alert": [
+        "naiwa-motion-notification.png"
+      ],
+      "mini-happy": [
+        "naiwa-classic-belly-laugh.png"
+      ],
+      "mini-enter": [
+        "naiwa-motion-patrol.png"
+      ],
+      "mini-peek": [
+        "naiwa-motion-attention.png"
+      ],
+      "mini-working": [
+        "naiwa-motion-working.png"
+      ],
+      "mini-crabwalk": [
+        "naiwa-motion-patrol.png"
+      ],
+      "mini-enter-sleep": [
+        "naiwa-motion-collapsing.png"
+      ],
+      "mini-sleep": [
+        "naiwa-motion-sleeping.png"
+      ]
+    },
+    "timings": {
+      "minDisplay": {
+        "mini-alert": 4000,
+        "mini-happy": 4000
+      },
+      "autoReturn": {
+        "mini-alert": 4000,
+        "mini-happy": 4000
+      }
+    },
+    "glyphFlips": {}
+  },
+  "sounds": {
+    "complete": "complete.mp3",
+    "confirm": "confirm.mp3"
+  },
+  "objectScale": {
+    "widthRatio": 1,
+    "heightRatio": 1,
+    "offsetX": 0,
+    "offsetY": 0
+  },
+  "license": "MIT for upstream animation frames; see THIRD-PARTY-NOTICES.md",
+  "sleepSequence": {
+    "mode": "full"
+  }
+}

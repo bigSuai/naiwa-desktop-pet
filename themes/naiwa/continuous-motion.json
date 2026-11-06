@@ -1,0 +1,72 @@
+{
+  "continuousRigs": {
+    "drag": [
+      "target",
+      8
+    ],
+    "attention": [
+      "target",
+      8
+    ],
+    "double": [
+      "target",
+      8
+    ],
+    "double-jump": [
+      "target",
+      10
+    ],
+    "annoyed": [
+      "target",
+      15
+    ],
+    "headphones": [
+      "idle",
+      0
+    ],
+    "juggling": [
+      "idle",
+      0
+    ],
+    "yawning": [
+      "target",
+      0
+    ],
+    "waking": [
+      "target",
+      17
+    ],
+    "click-left": [
+      "target",
+      1
+    ],
+    "click-right": [
+      "target",
+      16
+    ],
+    "mini-happy": [
+      "target",
+      8
+    ],
+    "sleeping": [
+      "error",
+      3
+    ],
+    "dozing": [
+      "error",
+      1
+    ],
+    "mini-sleep": [
+      "error",
+      3
+    ],
+    "mini-enter-sleep": [
+      "error",
+      1
+    ]
+  },
+  "technique": "Native continuous CSS transforms, independent leg/body curves. No optical-flow morphing across pose cuts. Actual frame pacing depends on display/compositor.",
+  "source": "180x180 transparent MIT stills. Remaining states use APNG.",
+  "dragPeriodSeconds": 1.15,
+  "icons": "Dedicated multiresolution ICO and PNG names avoid old icon cache paths."
+}
