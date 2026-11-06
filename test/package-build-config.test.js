@@ -50,6 +50,7 @@ describe("package build config", () => {
       assert.ok(target, "Windows releases need a portable target");
       assert.deepStrictEqual(target.arch.slice().sort(), ["arm64", "x64"]);
       assert.strictEqual(pkg.build.portable.artifactName, "Naiwa-Desktop-Pet-Portable-${version}-${arch}.${ext}");
+      assert.strictEqual(pkg.build.portable.buildUniversalInstaller, false);
       assert.match(pkg.build.win.artifactName, /^Naiwa-Desktop-Pet-Setup-/);
     });
 

@@ -106,6 +106,7 @@
       ]
     },
     "portable": {
+      "buildUniversalInstaller": false,
       "artifactName": "Naiwa-Desktop-Pet-Portable-${version}-${arch}.${ext}"
     },
     "linux": {

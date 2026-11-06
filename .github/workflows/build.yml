@@ -29,6 +29,46 @@ jobs:
       - run: npm run fetch:sidecars -- --target windows-x64,windows-arm64
       - run: node scripts/verify-sidecar-binaries.js prebuild:win:all
       - run: npx electron-builder --win --publish never
+      - name: Inspect packaged source, licenses, private data and architecture
+        shell: pwsh
+        run: |
+          @'
+          const fs = require('node:fs'), path = require('node:path'), crypto = require('node:crypto');
+          const assert = require('node:assert/strict'), asar = require('@electron/asar'), yaml = require('js-yaml');
+          const { PINNED_CHECKSUMS } = require('./scripts/fetch-sidecar-binaries');
+          const version = require('./package.json').version;
+          const results = [];
+          for (const arch of ['x64', 'arm64']) {
+            const root = path.join('dist', arch === 'x64' ? 'win-unpacked' : 'win-arm64-unpacked');
+            const archive = path.join(root, 'resources', 'app.asar');
+            const entries = asar.listPackage(archive).map(name => name.replaceAll('\\', '/'));
+            const forbidden = /(^|\/)(\.clawd-data|\.env|clawd-prefs\.json|chat-history\.json|chat-config\.json|chat-credentials\.json|.*\.dpapi)(\/|$)/i;
+            assert.ok(!entries.some(name => forbidden.test(name)), 'Private data included');
+            assert.equal(JSON.parse(asar.extractFile(archive, 'package.json')).version, version);
+            const required = ['LICENSE', 'NOTICE.md', 'assets/LICENSE', 'src/raster-motion.js', 'src/updater.js', 'themes/naiwa/theme.json', 'themes/naiwa/THIRD-PARTY-NOTICES.md', 'themes/naiwa/UPSTREAM-LICENSE.txt'];
+            for (const file of required) assert.ok(asar.extractFile(archive, file).length, 'Missing ' + file);
+            for (const file of ['src/raster-motion.js', 'src/updater.js', 'themes/naiwa/theme.json']) {
+              const normalize = data => data.toString('utf8').replace(/\r\n/g, '\n');
+              assert.equal(normalize(asar.extractFile(archive, file)), normalize(fs.readFileSync(file)), 'Source mismatch: ' + file);
+            }
+            for (const name of ['idle', 'thinking', 'working', 'dozing', 'sleeping']) {
+              const file = 'themes/naiwa/assets/naiwa-motion-' + name + '.png';
+              assert.ok(asar.extractFile(archive, file).equals(fs.readFileSync(file)), 'Animation mismatch: ' + name);
+            }
+            const pe = fs.readFileSync(path.join(root, '奶蛙桌宠.exe'));
+            assert.equal(pe.readUInt16LE(pe.readUInt32LE(0x3c) + 4), arch === 'x64' ? 0x8664 : 0xaa64);
+            const updater = yaml.load(fs.readFileSync(path.join(root, 'resources', 'app-update.yml'), 'utf8'));
+            assert.equal(updater.owner, 'bigSuai'); assert.equal(updater.repo, 'naiwa-desktop-pet');
+            for (const sidecarArch of ['x64', 'arm64']) {
+              const key = 'windows-' + sidecarArch + '/cc-connect-clawd.exe';
+              const digest = crypto.createHash('sha256').update(fs.readFileSync(path.join(root, 'resources', 'sidecars', 'cc-connect-clawd', key))).digest('hex');
+              assert.equal(digest, PINNED_CHECKSUMS[key]);
+            }
+            results.push({ arch, version, entries: entries.length, sourceVerified: true, privateDataAbsent: true, licensesPresent: true, sidecarsVerified: true });
+          }
+          fs.writeFileSync('dist/packaged-inspection.json', JSON.stringify(results, null, 2));
+          console.log(JSON.stringify(results));
+          '@ | node
       - name: Smoke-test the packaged Windows x64 app
         shell: pwsh
         run: |
@@ -50,7 +90,9 @@ jobs:
             if ($process.HasExited) { throw 'Packaged app exited after startup' }
             Write-Output 'Packaged Windows x64 startup and health check passed.'
           } finally {
-            if (!$process.HasExited) { taskkill.exe /PID $process.Id /T /F | Out-Null }
+            Get-Process | Where-Object { $_.Path -eq $exe } | Stop-Process -Force -ErrorAction SilentlyContinue
+            Start-Sleep -Seconds 1
+            if (Get-Process | Where-Object { $_.Path -eq $exe }) { throw 'Smoke-test processes did not stop' }
           }
       - name: Write Windows checksums
         shell: pwsh
@@ -64,6 +106,7 @@ jobs:
           }
           if (!(Test-Path -LiteralPath dist/latest.yml)) { throw 'Missing update metadata' }
           $files = Get-ChildItem -LiteralPath dist -File | Where-Object { $_.Name -match '^(Naiwa-Desktop-Pet-.*\.exe(\.blockmap)?|latest\.yml)$' } | Sort-Object Name
+          if ($files.Name -contains "Naiwa-Desktop-Pet-Portable-$version.exe") { throw 'Unexpected universal portable build' }
           $lines = foreach ($file in $files) { '{0}  {1}' -f (Get-FileHash -LiteralPath $file.FullName -Algorithm SHA256).Hash.ToLowerInvariant(), $file.Name }
           $lines | Set-Content -LiteralPath dist/SHA256SUMS.txt -Encoding utf8NoBOM
       - uses: actions/upload-artifact@v4
@@ -74,6 +117,13 @@ jobs:
             dist/*.blockmap
             dist/latest.yml
             dist/SHA256SUMS.txt
+      - uses: actions/upload-artifact@v4
+        with:
+          name: windows-verification
+          path: |
+            dist/packaged-inspection.json
+            dist/SHA256SUMS.txt
+            dist/latest.yml
 
   build-mac:
     if: github.event_name == 'workflow_dispatch' && inputs.platforms == 'all'
