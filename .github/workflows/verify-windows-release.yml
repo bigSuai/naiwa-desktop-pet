@@ -1,0 +1,124 @@
+name: Verify Windows Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: Existing draft or public Windows release tag
+        required: true
+        type: string
+
+permissions:
+  contents: write
+
+jobs:
+  verify-release:
+    runs-on: windows-latest
+    timeout-minutes: 15
+    env:
+      RELEASE_TAG: ${{ inputs.tag }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.tag }}
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci --ignore-scripts --no-audit --no-fund
+      - name: Download the actual release assets
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if ($env:RELEASE_TAG -notmatch '^v\d+\.\d+\.\d+$') { throw 'Expected a stable release tag' }
+          gh release download $env:RELEASE_TAG --repo $env:GITHUB_REPOSITORY --dir downloads
+      - name: Verify every checksum and installer update reference
+        shell: pwsh
+        run: |
+          @'
+          const fs = require('node:fs'), path = require('node:path'), crypto = require('node:crypto');
+          const yaml = require('js-yaml'), assert = require('node:assert/strict');
+          const version = require('./package.json').version;
+          assert.equal(process.env.RELEASE_TAG, 'v' + version);
+          const expected = ['latest.yml'];
+          for (const arch of ['x64', 'arm64']) {
+            for (const kind of ['Setup', 'Portable']) expected.push(`Naiwa-Desktop-Pet-${kind}-${version}-${arch}.exe`);
+            expected.push(`Naiwa-Desktop-Pet-Setup-${version}-${arch}.exe.blockmap`);
+          }
+          const lines = fs.readFileSync('downloads/SHA256SUMS.txt', 'utf8').trim().split(/\r?\n/);
+          const checksums = new Map();
+          for (const line of lines) {
+            const match = /^([a-f0-9]{64})  ([A-Za-z0-9.-]+)$/.exec(line);
+            assert.ok(match && expected.includes(match[2]) && !checksums.has(match[2]), 'Invalid checksum target');
+            checksums.set(match[2], match[1]);
+          }
+          assert.equal(checksums.size, expected.length);
+          const hash = (file, algorithm) => crypto.createHash(algorithm).update(fs.readFileSync(path.join('downloads', file))).digest(algorithm === 'sha512' ? 'base64' : 'hex');
+          for (const file of expected) assert.equal(hash(file, 'sha256'), checksums.get(file), file);
+          const update = yaml.load(fs.readFileSync('downloads/latest.yml', 'utf8'));
+          assert.equal(update.version, version);
+          for (const arch of ['x64', 'arm64']) assert.ok(update.files.some(file => file.url === `Naiwa-Desktop-Pet-Setup-${version}-${arch}.exe`));
+          for (const file of update.files) {
+            assert.ok(expected.includes(file.url) && file.url.includes('-Setup-'));
+            assert.equal(hash(file.url, 'sha512'), file.sha512);
+            assert.equal(fs.statSync(path.join('downloads', file.url)).size, file.size);
+          }
+          fs.writeFileSync('release-verification.json', JSON.stringify({ tag: process.env.RELEASE_TAG, sourceCommit: process.env.GITHUB_SHA, checkedFiles: [...checksums].map(([name, sha256]) => ({ name, sha256 })), updateMetadataVerified: true }, null, 2));
+          '@ | node
+      - name: Install, launch, uninstall and launch portable x64
+        shell: pwsh
+        run: |
+          $version = (Get-Content -LiteralPath package.json -Raw | ConvertFrom-Json).version
+          $installDir = Join-Path $PWD 'smoke-installed'
+          function Stop-TestApps {
+            Get-Process -Name '奶蛙桌宠' -ErrorAction SilentlyContinue | Stop-Process -Force -ErrorAction SilentlyContinue
+            Start-Sleep -Seconds 2
+            if (Get-Process -Name '奶蛙桌宠' -ErrorAction SilentlyContinue) { throw 'Test app did not stop' }
+          }
+          function Wait-Healthy {
+            for ($i = 0; $i -lt 60; $i++) {
+              Start-Sleep -Seconds 1
+              try {
+                $health = Invoke-RestMethod -Uri http://127.0.0.1:23333/state -TimeoutSec 2
+                if ($health.ok -and $health.app -eq 'clawd-on-desk') { return }
+              } catch {}
+            }
+            throw 'Downloaded release did not become healthy'
+          }
+          function Run-Installer($exe, $arguments) {
+            $process = Start-Process -FilePath $exe -ArgumentList $arguments -WindowStyle Hidden -PassThru
+            if (!$process.WaitForExit(120000)) { Stop-Process -Id $process.Id -Force; throw 'Installer timed out' }
+            if ($process.ExitCode -ne 0) { throw "Installer exit code $($process.ExitCode)" }
+          }
+          $portable = $null
+          try {
+            Run-Installer (Join-Path $PWD "downloads/Naiwa-Desktop-Pet-Setup-$version-x64.exe") @('/S', "/D=$installDir")
+            $exe = Join-Path $installDir '奶蛙桌宠.exe'
+            if (!(Test-Path -LiteralPath $exe)) { throw 'Installed app missing' }
+            Start-Process -FilePath $exe -WindowStyle Hidden
+            Wait-Healthy
+            Stop-TestApps
+            $uninstaller = @(Get-ChildItem -LiteralPath $installDir -Filter 'Uninstall*.exe')
+            if ($uninstaller.Count -ne 1) { throw 'Expected one uninstaller' }
+            Run-Installer $uninstaller[0].FullName @('/S')
+            for ($i = 0; $i -lt 30 -and (Test-Path -LiteralPath $exe); $i++) { Start-Sleep -Seconds 1 }
+            if (Test-Path -LiteralPath $exe) { throw 'Uninstall left the program executable behind' }
+            $portable = Start-Process -FilePath (Join-Path $PWD "downloads/Naiwa-Desktop-Pet-Portable-$version-x64.exe") -WindowStyle Hidden -PassThru
+            Wait-Healthy
+            Start-Sleep -Seconds 3
+            $report = Get-Content -LiteralPath release-verification.json -Raw | ConvertFrom-Json
+            $report | Add-Member -NotePropertyName x64InstalledStartupVerified -NotePropertyValue $true
+            $report | Add-Member -NotePropertyName x64UninstallVerified -NotePropertyValue $true
+            $report | Add-Member -NotePropertyName x64PortableStartupVerified -NotePropertyValue $true
+            $report | Add-Member -NotePropertyName arm64HardwareTested -NotePropertyValue $false
+            $report | ConvertTo-Json -Depth 6 | Set-Content -LiteralPath release-verification.json -Encoding utf8NoBOM
+          } finally {
+            Stop-TestApps
+            if ($portable -and !$portable.HasExited) { Stop-Process -Id $portable.Id -Force -ErrorAction SilentlyContinue }
+          }
+      - uses: actions/upload-artifact@v4
+        with:
+          name: windows-release-verification
+          path: release-verification.json
