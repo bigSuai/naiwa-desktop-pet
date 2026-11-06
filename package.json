@@ -1,6 +1,6 @@
 {
   "name": "clawd-on-desk",
-  "version": "0.8.3",
+  "version": "0.8.4",
   "description": "Naiwa desktop companion with AI agent activity and private, user-configured chat.",
   "main": "src/main.js",
   "scripts": {

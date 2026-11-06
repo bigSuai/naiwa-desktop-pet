@@ -69,6 +69,34 @@ function makeLatestReleaseResponse(release) {
 }
 
 describe("portable release updates", () => {
+  it("reads the canonical release tag when Electron fetch omits Response.url", async () => {
+    for (const origin of ['https://github.com', 'https://example.invalid']) {
+      const updater = initUpdater(makeCtx(), makeDeps({
+        fetch: async (url) => url.includes('api.github.com')
+          ? new Response('{}', { status: 403 })
+          : { status: 200, url: '', headers: new Headers(), text: async () => `<meta property="og:url" content="${origin}/bigSuai/naiwa-desktop-pet/releases/tag/v0.8.4">` },
+      }));
+      const result = await updater.quietDiscover();
+      assert.equal(result.status, origin === 'https://github.com' ? 'new-update' : 'error');
+    }
+  });
+
+  it("follows the public release redirect when Electron cannot expose manual redirects", async () => {
+    const requests = [];
+    const updater = initUpdater(makeCtx(), makeDeps({
+      fetch: async (url, options) => {
+        requests.push({ url, redirect: options.redirect });
+        if (url.includes('api.github.com')) return new Response('{}', { status: 403 });
+        assert.equal(options.redirect, 'follow');
+        return { status: 200, url: 'https://github.com/bigSuai/naiwa-desktop-pet/releases/tag/v0.8.4', headers: new Headers(), text: async () => '<html></html>' };
+      },
+    }));
+    const result = await updater.quietDiscover();
+    assert.equal(result.status, 'new-update');
+    assert.equal(result.version, 'v0.8.4');
+    assert.deepEqual(requests.map(request => request.redirect), ['manual', 'follow']);
+  });
+
   it("opens the Naiwa download page without initializing or downloading an installer", async () => {
     const opened = [], bubbles = [];
     let factories = 0;
@@ -1156,7 +1184,7 @@ describe("Naiwa update repository", () => {
     for (let i = 0; i < 3; i++) assert.equal((await updater.quietDiscover()).status, "new-update");
     assert.equal(requests[1].url, "https://github.com/bigSuai/naiwa-desktop-pet/releases/latest");
     assert.equal(requests[3].options.headers["If-None-Match"], '"naiwa-etag"');
-    assert.ok(requests.every((r) => r.options.redirect === "manual"));
+    assert.deepEqual(requests.map((r) => r.options.redirect), ["manual", "follow", "manual", "manual"]);
   });
 
   it("aborts timed-out proxy requests and reports a real network error", async (t) => {

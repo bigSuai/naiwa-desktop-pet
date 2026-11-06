@@ -481,6 +481,8 @@ function initUpdater(ctx, deps = {}) {
     if (!location) return "";
     try {
       const url = new URL(String(location), RELEASES_LATEST_URL);
+      const prefix = `/${appIdentity.owner}/${appIdentity.repository}/releases/tag/`;
+      if (url.origin !== "https://github.com" || !url.pathname.toLowerCase().startsWith(prefix.toLowerCase())) return "";
       const match = /\/releases\/tag\/([^/?#]+)\/?$/.exec(url.pathname);
       return match ? decodeURIComponent(match[1]) : "";
     } catch {
@@ -488,7 +490,7 @@ function initUpdater(ctx, deps = {}) {
     }
   }
 
-  async function requestGitHub(options, label) {
+  async function requestGitHub(options, label, { redirect = "manual" } = {}) {
     const timeoutMessage = `${label} request timed out (10s)`;
     if (typeof fetchImpl === "function") {
       const controller = new AbortController();
@@ -500,11 +502,11 @@ function initUpdater(ctx, deps = {}) {
       try {
         const response = await fetchImpl(`https://${options.hostname}${options.path}`, {
           headers: options.headers,
-          redirect: "manual",
+          redirect,
           signal: controller.signal,
         });
         const body = await response.text();
-        return { statusCode: response.status, headers: Object.fromEntries(response.headers.entries()), body };
+        return { statusCode: response.status, headers: Object.fromEntries(response.headers.entries()), body, url: response.url || "" };
       } catch (err) {
         if (timedOut) throw new Error(timeoutMessage);
         throw err;
@@ -535,9 +537,21 @@ function initUpdater(ctx, deps = {}) {
       hostname: "github.com",
       path: `/${appIdentity.owner}/${appIdentity.repository}/releases/latest`,
       headers: { "User-Agent": "Naiwa-Desktop-Pet", Accept: "text/html,*/*" },
-    }, "GitHub releases redirect");
-    const tag = extractLatestRedirectTag(res.headers.location);
-    if (res.statusCode >= 300 && res.statusCode < 400 && tag) {
+    }, "GitHub releases redirect", { redirect: "follow" });
+    let tag = extractLatestRedirectTag(res.headers.location || res.url);
+    if (!tag && res.statusCode === 200) {
+      // Electron net.fetch follows redirects but can leave Response.url empty.
+      const { Parser } = require("htmlparser2");
+      const parser = new Parser({
+        onopentag(name, attrs) {
+          if (tag) return;
+          if (name === "meta" && attrs.property === "og:url") tag = extractLatestRedirectTag(attrs.content);
+          if (name === "link" && attrs.rel === "canonical") tag = extractLatestRedirectTag(attrs.href);
+        },
+      });
+      parser.end(res.body);
+    }
+    if (tag && ((res.statusCode >= 300 && res.statusCode < 400) || res.statusCode === 200)) {
       // Redirect discovery supplies a tag but no installer asset metadata.
       return { tag_name: tag, assets: [] };
     }
