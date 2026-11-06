@@ -1,0 +1,69 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 240" data-performance="sleeping" data-pose="curled-side-sleep"><title>奶蛙 · 侧躺蜷腿，脸颊枕在双手上</title><defs><radialGradient id="skin" cx="30%" cy="20%" r="85%"><stop stop-color="#ffdf66"/><stop offset=".58" stop-color="#edb52b"/><stop offset="1" stop-color="#c48b1e"/></radialGradient><radialGradient id="belly" cx="40%" cy="30%"><stop stop-color="#fff3c8"/><stop offset="1" stop-color="#ead5a1"/></radialGradient><linearGradient id="screen" x2="1" y2="1"><stop stop-color="#def7df"/><stop offset="1" stop-color="#9ac5ad"/></linearGradient></defs><style>
+.breathe{transform-origin:120px 210px;animation:breath 3s ease-in-out infinite}
+.head-nod{animation:nod 2.4s ease-in-out infinite;transform-box:fill-box;transform-origin:50% 85%}
+.typing-left{transform-origin:145px 137px;animation:type-l .32s ease-in-out infinite}
+.typing-right{transform-origin:150px 143px;animation:type-r .32s ease-in-out infinite}
+.code{animation:code 1.7s ease-in-out infinite}.c1{animation-delay:-.8s}
+.sway{transform-origin:120px 176px;animation:sway 2.1s ease-in-out infinite}
+.walk{animation:walk .9s ease-in-out infinite}
+.step-l{transform-origin:99px 179px;animation:step .9s ease-in-out infinite alternate}
+.step-r{transform-origin:140px 179px;animation:step .9s ease-in-out infinite alternate-reverse}
+.sweep{transform-origin:120px 138px;animation:sweep 1.4s ease-in-out infinite}
+.dust{animation:dust 1.4s ease-out infinite}.dust2{animation-delay:-.7s}
+.laugh{transform-origin:120px 180px;animation:laugh .42s ease-in-out infinite}
+.hop{transform-origin:120px 221px;animation:hop 1.4s cubic-bezier(.45,0,.55,1) infinite}
+.wave{transform-origin:151px 134px;animation:wave .85s ease-in-out infinite}
+.sleep{transform-origin:120px 206px;animation:breath 4.2s ease-in-out infinite}
+.curl{transform-origin:121px 181px;animation:curl 3s ease-in-out infinite}
+.stretch{transform-origin:120px 214px;animation:stretch 2.8s ease-in-out infinite}
+.swing{transform-origin:120px 58px;animation:swing 1.7s ease-in-out infinite}
+.leg{transform-origin:110px 168px;animation:leg .66s ease-in-out infinite alternate}
+.leg2{transform-origin:140px 168px;animation:leg .66s ease-in-out infinite alternate-reverse}
+.peek{animation:peek 2.7s ease-in-out infinite}
+.bubble{animation:bubble 3s ease-out infinite;transform-origin:76px 92px}
+.ball1{animation:ball1 1.8s linear infinite}.ball2{animation:ball2 1.8s linear infinite}.ball3{animation:ball3 1.8s linear infinite}
+.poke-left{transform-origin:120px 208px;animation:poke-l 2.5s ease-in-out infinite}
+.poke-right{transform-origin:120px 208px;animation:poke-r 2.5s ease-in-out infinite}
+.blink{transform-box:fill-box;transform-origin:center;animation:blink 4.8s ease-in-out infinite}
+.edge-lower{transform-origin:150px 184px;animation:lower 2.5s ease-in-out forwards}
+.edge-enter{animation:enter 1s ease-in-out forwards}
+.patrol{animation:patrol 3.5s ease-in-out infinite}
+.settle{transform-origin:120px 195px;animation:settle 2.6s ease-in-out forwards}
+.code-breathe{transform-origin:147px 181px;animation:codebreath 2.2s ease-in-out infinite}
+.sigh{transform-origin:149px 183px;animation:sigh 2.8s ease-in-out infinite}
+.inspect{transform-origin:147px 181px;animation:inspect 2.6s ease-in-out infinite}
+.yawn-mouth{transform-box:fill-box;transform-origin:center;animation:yawnmouth 3s ease-in-out infinite}
+@keyframes breath{0%,100%{transform:scale(1,1)}50%{transform:scale(1.018,.985)}}
+@keyframes nod{0%,100%{rotate:0deg}50%{rotate:7deg}}
+@keyframes type-l{0%,100%{transform:rotate(-2deg)}50%{transform:rotate(3deg)}}
+@keyframes type-r{0%,100%{transform:rotate(3deg)}50%{transform:rotate(-2deg)}}
+@keyframes code{0%,100%{opacity:.65}50%{opacity:1}}
+@keyframes sway{0%,100%{transform:rotate(-3deg)}50%{transform:rotate(3deg)}}
+@keyframes walk{0%,50%,100%{transform:translateY(0)}25%,75%{transform:translateY(-3px)}}
+@keyframes step{from{transform:rotate(-8deg)}to{transform:rotate(8deg)}}
+@keyframes sweep{0%,100%{transform:rotate(-10deg)}50%{transform:rotate(9deg)}}
+@keyframes dust{0%{opacity:0;transform:translate(0,0)}25%{opacity:.7}100%{opacity:0;transform:translate(18px,-12px)}}
+@keyframes laugh{0%,100%{transform:rotate(-2deg) scaleY(1)}50%{transform:rotate(2deg) scaleY(.975)}}
+@keyframes hop{0%,100%{transform:translateY(0) scale(1,1)}15%,85%{transform:translateY(2px) scale(1.04,.96)}50%{transform:translateY(-18px) scale(.98,1.02)}}
+@keyframes wave{0%,100%{transform:rotate(-7deg)}50%{transform:rotate(12deg)}}
+@keyframes curl{0%,100%{transform:rotate(0)}50%{transform:rotate(12deg) translate(4px,6px)}}
+@keyframes stretch{0%,100%{transform:scaleY(.98)}50%{transform:scaleY(1.06)}}
+@keyframes swing{0%,100%{transform:rotate(-6deg)}50%{transform:rotate(6deg)}}
+@keyframes leg{from{transform:rotate(-9deg)}to{transform:rotate(9deg)}}
+@keyframes peek{0%,100%{transform:translateX(8px)}50%{transform:translateX(-8px)}}
+@keyframes bubble{0%,10%{transform:translate(0,0) scale(.1);opacity:0}20%{opacity:.75}85%{opacity:.5}100%{transform:translate(-25px,-38px) scale(1.3);opacity:0}}
+@keyframes ball1{0%,100%{transform:translate(0,0)}25%{transform:translate(55px,-58px)}50%{transform:translate(104px,0)}75%{transform:translate(54px,10px)}}
+@keyframes ball2{0%,100%{transform:translate(0,0)}25%{transform:translate(-52px,55px)}50%{transform:translate(0,68px)}75%{transform:translate(52px,55px)}}
+@keyframes ball3{0%,100%{transform:translate(0,0)}25%{transform:translate(-54px,10px)}50%{transform:translate(-104px,0)}75%{transform:translate(-55px,-58px)}}
+@keyframes poke-l{0%,100%{transform:rotate(0)}25%,55%{transform:rotate(12deg) translateX(8px)}}
+@keyframes poke-r{0%,100%{transform:rotate(0)}25%,55%{transform:rotate(-12deg) translateX(-8px)}}
+@keyframes blink{0%,42%,48%,100%{transform:scaleY(1)}45%{transform:scaleY(.12)}}
+@keyframes lower{from{transform:translateY(-13px) rotate(-5deg)}to{transform:translateY(0) rotate(0)}}
+@keyframes enter{from{transform:translateX(0)}to{transform:translateX(24px)}}
+@keyframes patrol{0%,100%{transform:translateX(-10px)}50%{transform:translateX(10px)}}
+@keyframes settle{from{transform:translateY(-9px) rotate(-34deg)}to{transform:translateY(0) rotate(0)}}
+@keyframes codebreath{0%,100%{transform:scale(1,1)}50%{transform:scale(1.008,.997)}}
+@keyframes sigh{0%,100%{transform:rotate(0) translateY(0)}55%{transform:rotate(-2deg) translateY(2px)}}
+@keyframes inspect{0%,100%{transform:rotate(0) translateX(0)}50%{transform:rotate(-2deg) translateX(-2px)}}
+@keyframes yawnmouth{0%,100%{transform:scaleY(.4)}45%,65%{transform:scaleY(1)}}
+</style><g class="sleep"><ellipse cx="120" cy="222" rx="76" ry="5" fill="#50746a" opacity=".13"/><g transform="rotate(-18 113 175)"><g transform="translate(113 175) scale(1.17 0.78)"><path d="M-28-42C-40-30-46-1-40 25C-35 49-16 58 8 56C34 54 44 37 42 13C40-15 28-36 12-45C0-52-18-51-28-42Z" fill="url(#skin)" /><ellipse cx="2" cy="14" rx="30" ry="37" fill="url(#belly)" /><ellipse cx="-19" cy="-12" rx="8" ry="16" fill="#ffe279" opacity=".32"/></g></g><ellipse cx="62" cy="190" rx="17" ry="16" fill="url(#skin)" /><g transform="translate(47 207) scale(-1 1)"><path d="M-8 -4q9-6 13 0l7 5q0 5-6 4L-7 6q-8-1-5-5Z" fill="#655238" /><path d="M-6 1q7-3 13 1" fill="none" stroke="#a38650" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" /></g><ellipse cx="80" cy="201" rx="17" ry="10" fill="url(#skin)" /><g transform="translate(64 216) scale(-1 1)"><path d="M-8 -4q9-6 13 0l7 5q0 5-6 4L-7 6q-8-1-5-5Z" fill="#655238" /><path d="M-6 1q7-3 13 1" fill="none" stroke="#a38650" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" /></g><g><path d="M133 178Q150 197 173 206" fill="none" stroke="#b67d1d" stroke-width="13" stroke-linecap="round" stroke-linejoin="round" /><path d="M132 177Q149 196 172 205" fill="none" stroke="url(#skin)" stroke-width="11" stroke-linecap="round" stroke-linejoin="round" /><g transform="translate(173 206) rotate(0)"><ellipse cx="0" cy="0" rx="6" ry="5" fill="#665132" /><path d="M-5 0q-4 4-2 5m4-4q-2 5 0 6m3-5q0 4 2 4" fill="none" stroke="#5a452b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" /></g></g><g><path d="M133 187Q146 212 163 213" fill="none" stroke="#b67d1d" stroke-width="13" stroke-linecap="round" stroke-linejoin="round" /><path d="M132 186Q145 211 162 212" fill="none" stroke="url(#skin)" stroke-width="11" stroke-linecap="round" stroke-linejoin="round" /><g transform="translate(163 213) rotate(0)"><ellipse cx="0" cy="0" rx="6" ry="5" fill="#665132" /><path d="M-5 0q-4 4-2 5m4-4q-2 5 0 6m3-5q0 4 2 4" fill="none" stroke="#5a452b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" /></g></g><g transform="translate(167 183) rotate(26) scale(.82 .94)"><path d="M-29 0C-36-16-28-34-13-36C-6-46 7-45 13-35C31-32 37-17 31 3C25 19 4 24-13 17C-22 14-26 8-29 0Z" fill="url(#skin)" /><g><ellipse cx="-15" cy="-31" rx="6.8" ry="8" fill="#e7b535" /><ellipse cx="-14.5" cy="-32" rx="4.8" ry="5.7" fill="#edc34e" /><path d="M-19 -31q4 3 8 0" fill="none" stroke="#483c23" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round" /><ellipse cx="7" cy="-33" rx="6.2" ry="7.5" fill="#e7b535" /><ellipse cx="7.5" cy="-34" rx="4.8" ry="5.7" fill="#edc34e" /><path d="M3 -33q4 3 8 0" fill="none" stroke="#483c23" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round" /></g><ellipse cx="-21" cy="-7" rx="1.8" ry="1" fill="#9c711a" /><ellipse cx="-8" cy="-9" rx="1.7" ry="1" fill="#9c711a" /><path d="M-19 2q12 11 27-1" fill="none" stroke="#805623" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" /><ellipse cx="20" cy="-7" rx="7" ry="10" fill="#fce081" opacity=".3"/></g></g></svg>
